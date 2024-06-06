@@ -1,6 +1,7 @@
 plugins {
-    alias(libs.plugins.androidApplication)
-    alias(libs.plugins.jetbrainsKotlinAndroid)
+    id("com.android.application")
+    id("org.jetbrains.kotlin.android")
+    id("com.google.devtools.ksp")
 }
 
 android {
@@ -36,17 +37,19 @@ android {
 }
 
 dependencies {
-    implementation (libs.androidx.recyclerview)
-    implementation (libs.androidx.room.runtime)
-    annotationProcessor (libs.androidx.room.compiler)
-    implementation (libs.androidx.lifecycle.extensions)
-    implementation (libs.material.v130)
-    implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.appcompat)
+    implementation(libs.androidx.recyclerview.v121)
+    implementation(libs.androidx.room.runtime.v230)
+    implementation(libs.androidx.room.ktx.v250)
+    ksp(libs.androidx.room.compiler.v230)
+    implementation(libs.material.v150alpha05)
+    implementation(libs.androidx.lifecycle.extensions)
     implementation(libs.material)
-    implementation(libs.androidx.activity)
-    implementation(libs.androidx.constraintlayout)
+    implementation(libs.androidx.core.ktx.v160)
+    implementation(libs.androidx.appcompat.v130)
+    implementation(libs.androidx.activity.ktx.v130)
+    implementation(libs.androidx.constraintlayout.v204)
+    implementation(libs.androidx.lifecycle.viewmodel.ktx)
     testImplementation(libs.junit)
-    androidTestImplementation(libs.androidx.junit)
-    androidTestImplementation(libs.androidx.espresso.core)
+    androidTestImplementation(libs.androidx.junit.v113)
+    androidTestImplementation(libs.androidx.espresso.core.v340)
 }

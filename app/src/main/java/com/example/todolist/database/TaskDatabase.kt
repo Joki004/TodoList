@@ -1,4 +1,5 @@
 package com.example.todolist.database
+
 import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
@@ -8,9 +9,10 @@ import com.example.todolist.database.entities.Attachment
 import com.example.todolist.database.entities.Category
 import com.example.todolist.database.entities.Task
 
-@Database(entities = [Task::class, Attachment::class, Category::class], version = 1)
+@Database(entities = [Task::class, Attachment::class, Category::class], version = 1,exportSchema = false)
 abstract class TaskDatabase : RoomDatabase() {
     abstract fun taskDao(): TaskDao
+
     companion object {
         @Volatile
         private var instance: TaskDatabase? = null
