@@ -36,7 +36,11 @@ android {
 }
 
 dependencies {
-
+    implementation (libs.androidx.recyclerview)
+    implementation (libs.androidx.room.runtime)
+    annotationProcessor (libs.androidx.room.compiler)
+    implementation (libs.androidx.lifecycle.extensions)
+    implementation (libs.material.v130)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
