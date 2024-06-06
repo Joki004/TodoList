@@ -22,7 +22,7 @@ class TaskAdapter : ListAdapter<Task, TaskAdapter.TaskHolder>(DIFF_CALLBACK) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): TaskHolder {
         val itemView = LayoutInflater.from(parent.context)
-            .inflate(R.layout.task_item, parent, false)
+            .inflate(R.layout.fragment_task_item, parent, false)
         return TaskHolder(itemView)
     }
 
@@ -33,7 +33,7 @@ class TaskAdapter : ListAdapter<Task, TaskAdapter.TaskHolder>(DIFF_CALLBACK) {
     }
 
     class TaskHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        val textViewTitle: TextView = itemView.findViewById(R.id.text_view_title)
-        val textViewDescription: TextView = itemView.findViewById(R.id.text_view_description)
+        val textViewTitle: TextView = itemView.findViewById(R.id.task_title)
+        val textViewDescription: TextView = itemView.findViewById(R.id.task_description)
     }
 }

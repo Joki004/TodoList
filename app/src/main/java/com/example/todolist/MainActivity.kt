@@ -5,63 +5,51 @@ import android.content.pm.PackageManager
 import android.os.Bundle
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.Observer
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
-import com.example.todolist.database.entities.Task
-import com.example.todolist.permissions.AskPermissions
+import androidx.appcompat.widget.Toolbar
+import androidx.drawerlayout.widget.DrawerLayout
+import androidx.navigation.findNavController
+import androidx.navigation.fragment.NavHostFragment
+import androidx.navigation.ui.AppBarConfiguration
+import androidx.navigation.ui.NavigationUI
+import androidx.navigation.ui.setupActionBarWithNavController
+import androidx.navigation.ui.setupWithNavController
 import com.example.todolist.filepicker.PickFile
+import com.example.todolist.permissions.AskPermissions
 import com.example.todolist.viewmodel.TaskViewModel
+import com.google.android.material.navigation.NavigationView
 
 class MainActivity : AppCompatActivity() {
     private lateinit var askPermissions: AskPermissions
     private lateinit var pickFile: PickFile
-    private val taskViewModel: TaskViewModel by viewModels()
+    private lateinit var appBarConfiguration: AppBarConfiguration
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        val toolbar: Toolbar = findViewById(R.id.toolbar)
+        setSupportActionBar(toolbar) // Add this line
+
         askPermissions = AskPermissions(this, this)
         pickFile = PickFile(this)
 
-        // Request permissions
-        // askPermissions.requestPermissions()
+        val drawerLayout: DrawerLayout = findViewById(R.id.drawer_layout)
+        val navView: NavigationView = findViewById(R.id.nav_view)
+        val navHostFragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
+        val navController = navHostFragment.navController
 
-        // Open file picker
-        // pickFile.openFilePicker()
-
-        val recyclerView = findViewById<RecyclerView>(R.id.recyclerView)
-        recyclerView.layoutManager = LinearLayoutManager(this)
-        recyclerView.setHasFixedSize(true)
-
-        val adapter = TaskAdapter()
-        recyclerView.adapter = adapter
-
-        taskViewModel.allTasks.observe(this, Observer { tasks ->
-            tasks?.let {
-                adapter.submitList(it)
-            }
-        })
-
-        // Example: Insert a new task
-        val newTask = Task(
-            title = "Example Task",
-            description = "This is an example task",
-            creationTime = System.currentTimeMillis(),
-            completionTime = System.currentTimeMillis() + 100000,
-            isCompleted = false,
-            notificationEnabled = false,
-            categoryId = null,
-            hasAttachments = false
+        appBarConfiguration = AppBarConfiguration(
+            setOf(R.id.homeFragment, R.id.editTaskFragment, R.id.allTasksFragment, R.id.DailyTasksFragment), drawerLayout
         )
-        taskViewModel.insert(newTask)
+
+        setupActionBarWithNavController(navController, appBarConfiguration)
+        navView.setupWithNavController(navController)
     }
 
     @Deprecated("Deprecated in Java")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         val filePaths = pickFile.handleActivityResult(requestCode, resultCode, data)
-        // Save the file paths or handle them as needed
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
@@ -73,5 +61,10 @@ class MainActivity : AppCompatActivity() {
                 // Handle the case where permissions are not granted
             }
         }
+    }
+
+    override fun onSupportNavigateUp(): Boolean {
+        val navController = findNavController(R.id.nav_host_fragment)
+        return NavigationUI.navigateUp(navController, appBarConfiguration) || super.onSupportNavigateUp()
     }
 }
