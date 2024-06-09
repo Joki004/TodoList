@@ -9,11 +9,12 @@ import com.example.todolist.database.entities.Task
 class TaskRepository(application: Application) {
     private val taskDao: TaskDao
     val allTasks: LiveData<List<Task>>
-
+    val tasksByCreationTimeDesc: LiveData<List<Task>>
     init {
         val database = TaskDatabase.getInstance(application)
         taskDao = database.taskDao()
         allTasks = taskDao.getAllTasks()
+        tasksByCreationTimeDesc = taskDao.getAllTasksOrderByCreationTimeDesc()
     }
 
     suspend fun insert(task: Task) {

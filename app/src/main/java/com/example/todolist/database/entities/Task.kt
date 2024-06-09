@@ -3,6 +3,7 @@ package com.example.todolist.database.entities
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.PrimaryKey
+import java.util.Date
 
 @Entity(
     tableName = "task_table",
@@ -18,7 +19,7 @@ data class Task(
     val title: String,
     val description: String,
     val creationTime: Long,
-    val completionTime: Long,
+    val completionTime: Date,
     val isCompleted: Boolean,
     val notificationEnabled: Boolean,
     val categoryId: Int?,

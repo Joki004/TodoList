@@ -32,6 +32,9 @@ interface TaskDao {
     @Query("SELECT * FROM task_table ORDER BY creationTime DESC")
     fun getAllTasksOrderByCreationTimeDesc(): LiveData<List<Task>>
 
+    @Query("SELECT * FROM TASK_TABLE ORDER BY completionTime DESC")
+    fun getAllTasksOrderByCompletionTimeDESC(): LiveData<List<Task>>
+
     @Query("SELECT * FROM task_table WHERE isCompleted = 0 ORDER BY completionTime ASC")
     fun getUrgentTasks(): LiveData<List<Task>>
 
