@@ -16,7 +16,7 @@ import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 
-class TaskAdapter : ListAdapter<Task, TaskAdapter.TaskHolder>(DIFF_CALLBACK) {
+class TaskAdapter(private val isDaily: Boolean = false) : ListAdapter<Task, TaskAdapter.TaskHolder>(DIFF_CALLBACK) {
     companion object {
         private val DIFF_CALLBACK = object : DiffUtil.ItemCallback<Task>() {
             override fun areItemsTheSame(oldItem: Task, newItem: Task): Boolean {
@@ -30,8 +30,8 @@ class TaskAdapter : ListAdapter<Task, TaskAdapter.TaskHolder>(DIFF_CALLBACK) {
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): TaskHolder {
-        val itemView = LayoutInflater.from(parent.context)
-            .inflate(R.layout.fragment_task_item, parent, false)
+        val layout = if (isDaily) R.layout.daily_task else R.layout.all_tasks
+        val itemView = LayoutInflater.from(parent.context).inflate(layout, parent, false)
         return TaskHolder(itemView)
     }
 
@@ -66,7 +66,7 @@ class TaskAdapter : ListAdapter<Task, TaskAdapter.TaskHolder>(DIFF_CALLBACK) {
         val textViewTitle: TextView = itemView.findViewById(R.id.task_title)
         val textViewDescription: TextView = itemView.findViewById(R.id.task_description)
         val taskTime: TextView = itemView.findViewById(R.id.task_time)
-        val taskAttachments: ImageView = itemView.findViewById(R.id.task_attachements)
+        val taskAttachments: ImageView = itemView.findViewById(R.id.task_attachment)
         val taskStatus: TextView = itemView.findViewById(R.id.task_status)
     }
 
@@ -78,8 +78,8 @@ class TaskAdapter : ListAdapter<Task, TaskAdapter.TaskHolder>(DIFF_CALLBACK) {
         return if (currentDate.get(Calendar.YEAR) == taskDate.get(Calendar.YEAR) &&
             currentDate.get(Calendar.DAY_OF_YEAR) == taskDate.get(Calendar.DAY_OF_YEAR)
         ) {
-            val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
-            timeFormat.format(timestamp)
+            val timeFormat = SimpleDateFormat("HH:mm a", Locale.getDefault())
+            "Today " + timeFormat.format(timestamp)
         } else {
             val dateFormat = SimpleDateFormat("dd MMM hh:mm a", Locale.getDefault())
             dateFormat.format(timestamp)

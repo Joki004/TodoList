@@ -20,13 +20,13 @@
         android:id="@+id/allTasksFragment"
         android:name="com.example.todolist.ui.AllTasksFragment"
         android:label="All Tasks"
-        tools:layout="@layout/fragment_task_item" />
+        tools:layout="@layout/daily_task" />
 
     <fragment
         android:id="@+id/DailyTasksFragment"
         android:name="com.example.todolist.ui.DailyTasksFragment"
         android:label="Daily Tasks"
-        tools:layout="@layout/fragment_task_item_timeline" />
+        tools:layout="@layout/all_tasks" />
 
     <!-- Add more fragments as needed -->
 

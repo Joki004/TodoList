@@ -28,7 +28,7 @@ abstract class TaskDatabase : RoomDatabase() {
                     context.applicationContext,
                     TaskDatabase::class.java,
                     "task_database"
-                ) .addMigrations(MIGRATION_1_3)
+                ) .addMigrations(MIGRATION_1_2)
                     .build()
                     .also { instance = it }
             }

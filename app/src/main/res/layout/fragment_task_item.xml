@@ -1,132 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="100dp"
-    android:background="?attr/selectableItemBackground"
-    android:paddingBottom="10dp"
-    android:paddingTop="10dp"
-    tools:ignore="RtlSymmetry">
-
+    android:layout_height="match_parent"
+    android:orientation="vertical">
     <ImageView
-        android:id="@+id/task_icon"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:src="@drawable/ic_task_icon"
-        app:layout_constraintBottom_toTopOf="@+id/bottom_border"
-        app:layout_constraintEnd_toStartOf="@id/guideline"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <TextView
-        android:paddingLeft="10dp"
-        android:id="@+id/task_time"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:autoSizeTextType="uniform"
-        android:text="Time"
-        android:gravity="center"
-        android:textAlignment="center"
-        android:textColor="@android:color/darker_gray"
-        android:textSize="14sp"
-        app:layout_constraintBottom_toTopOf="@+id/bottom_border"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@id/guideline3"
-        app:layout_constraintTop_toTopOf="parent" />
-
-
-    <TextView
-        android:id="@+id/task_title"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:layout_marginBottom="10dp"
-        android:autoSizeTextType="uniform"
-        android:autoSizeMinTextSize="18sp"
-        android:text="Task Title"
-        android:gravity="center"
-        android:textAlignment="textStart"
-        android:textColor="@android:color/black"
-        android:textStyle="bold"
-        app:layout_constraintBottom_toTopOf="@id/task_description"
-        app:layout_constraintEnd_toStartOf="@id/guideline2"
-        app:layout_constraintStart_toEndOf="@id/guideline"
-        app:layout_constraintTop_toTopOf="parent"
-        tools:ignore="RtlCompat" />
-
-    <TextView
-        android:id="@+id/task_description"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:autoSizeTextType="uniform"
-        android:paddingLeft="10dp"
-        android:text="Task description"
-        android:gravity="center"
-        android:textAlignment="textStart"
-        android:textColor="@android:color/darker_gray"
-        android:textSize="14sp"
-        app:layout_constraintBottom_toTopOf="@id/task_status"
-        app:layout_constraintEnd_toStartOf="@id/guideline2"
-        app:layout_constraintStart_toEndOf="@id/guideline"
-        app:layout_constraintTop_toBottomOf="@id/task_title"
-        tools:ignore="RtlCompat" />
-
-    <TextView
-        android:id="@+id/task_status"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:autoSizeTextType="uniform"
-        android:paddingLeft="10dp"
-        android:text="Status"
-        android:gravity="center"
-        android:textAlignment="textStart"
-        android:textColor="@android:color/darker_gray"
-        android:textSize="14sp"
-        app:layout_constraintBottom_toTopOf="@+id/bottom_border"
-        app:layout_constraintEnd_toStartOf="@id/guideline2"
-        app:layout_constraintStart_toEndOf="@id/guideline"
-        app:layout_constraintTop_toBottomOf="@id/task_description"
-        tools:ignore="RtlCompat,RtlHardcoded,RtlSymmetry" />
-
-
-    <ImageView
-        android:id="@+id/task_attachements"
+        android:id="@+id/ic_filter"
         android:layout_width="30dp"
         android:layout_height="30dp"
+        android:scaleType="centerCrop"
+        android:src="@drawable/ic_filter"
+        android:layout_margin="10dp"
+        />
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recycler_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:clipToPadding="false"
+        android:padding="8dp" />
 
-        android:src="@drawable/ic_attachment"
-        app:layout_constraintBottom_toTopOf="@+id/bottom_border"
-        app:layout_constraintEnd_toStartOf="@id/guideline3"
-        app:layout_constraintStart_toEndOf="@id/guideline2"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <View
-        android:id="@+id/bottom_border"
-        android:layout_width="0dp"
-        android:layout_height="2dp"
-        android:background="@android:color/darker_gray"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
-
-    <androidx.constraintlayout.widget.Guideline
-        android:id="@+id/guideline"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        app:layout_constraintGuide_percent="0.15" />
-
-    <androidx.constraintlayout.widget.Guideline
-        android:id="@+id/guideline2"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        app:layout_constraintGuide_percent="0.60" />
-
-    <androidx.constraintlayout.widget.Guideline
-        android:id="@+id/guideline3"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        app:layout_constraintGuide_percent="0.70" />
-</androidx.constraintlayout.widget.ConstraintLayout>
+</LinearLayout>
