@@ -2,8 +2,10 @@ package com.example.todolist.helpers
 
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.Observer
-import com.example.todolist.TaskAdapter
+import com.example.todolist.adapter.TaskAdapter
+import com.example.todolist.adapter.CategoryAdapter
 import com.example.todolist.viewmodel.TaskViewModel
+
 
 fun observeAllTasks(
     lifecycleOwner: LifecycleOwner,
@@ -55,4 +57,49 @@ fun observeTasksForCurrentDay(
         taskAdapter.submitList(tasks)
     })
 
+}
+
+fun observeUrgentTasksForCurrentDay(
+    lifecycleOwner: LifecycleOwner,
+    taskViewModel: TaskViewModel,
+    taskAdapter: TaskAdapter
+) {
+    taskViewModel.getUrgentTasksForCurrentDay.observe(lifecycleOwner, Observer { tasks ->
+        taskAdapter.submitList(tasks)
+    })
+
+}
+
+fun observePendingTasksForCurrentDay(
+    lifecycleOwner: LifecycleOwner,
+    taskViewModel: TaskViewModel,
+    taskAdapter: TaskAdapter
+) {
+    taskViewModel.getPendingTasksForCurrentDay.observe(lifecycleOwner, Observer { tasks ->
+        taskAdapter.submitList(tasks)
+    })
+
+}
+
+
+
+fun observeCompletedTasksForCurrentDay(
+    lifecycleOwner: LifecycleOwner,
+    taskViewModel: TaskViewModel,
+    taskAdapter: TaskAdapter
+) {
+    taskViewModel.getCompletedTasksForCurrentDay.observe(lifecycleOwner, Observer { tasks ->
+        taskAdapter.submitList(tasks)
+    })
+
+}
+fun observeCategories(
+    lifecycleOwner: LifecycleOwner,
+    taskViewModel: TaskViewModel,
+    categoryAdapter: CategoryAdapter
+) {
+    taskViewModel.categories.observe(lifecycleOwner, Observer { categories ->
+        Categories.categoryList = categories.toMutableList()
+        categoryAdapter.submitList(Categories.categoryList)
+    })
 }

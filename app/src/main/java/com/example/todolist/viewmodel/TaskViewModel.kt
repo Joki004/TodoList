@@ -1,9 +1,12 @@
 package com.example.todolist.viewmodel
 
 import android.app.Application
+import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
+import androidx.lifecycle.MediatorLiveData
 import androidx.lifecycle.viewModelScope
+import com.example.todolist.database.entities.Category
 import com.example.todolist.database.entities.Task
 import com.example.todolist.repository.TaskRepository
 import kotlinx.coroutines.launch
@@ -18,6 +21,11 @@ class TaskViewModel(application: Application) : AndroidViewModel(application) {
     val completedTasks: LiveData<List<Task>>
     val urgentTasks: LiveData<List<Task>>
     val tasksForCurrentDay: LiveData<List<Task>>
+    val getUrgentTasksForCurrentDay: LiveData<List<Task>>
+    val categories: LiveData<List<Category>>
+    val getPendingTasksForCurrentDay: LiveData<List<Task>>
+    val getCompletedTasksForCurrentDay: LiveData<List<Task>>
+    val taskCompletionPercentage = MediatorLiveData<Int>()
     init {
         repository = TaskRepository(application)
         allTasks = repository.allTasks
@@ -26,13 +34,58 @@ class TaskViewModel(application: Application) : AndroidViewModel(application) {
         completedTasks = repository.completedTasks
         urgentTasks = repository.urgentTasks
         tasksForCurrentDay = repository.tasksForCurrentDay
-        insertSampleData()
+        getUrgentTasksForCurrentDay = repository.getUrgentTasksForCurrentDay
+        getPendingTasksForCurrentDay = repository.getPendingTasksForCurrentDay
+        getCompletedTasksForCurrentDay = repository.getCompletedTasksForCurrentDay
+        categories = repository.categories
+        val totalTasks = repository.getTotalTaskCount()
+        val completedTasks = repository.getCompletedTaskCount()
+
+        taskCompletionPercentage.addSource(totalTasks) { totalCount ->
+            Log.d("TaskViewModel", "Total Task Count: $totalCount")
+            updateTaskCompletionPercentage(totalCount, completedTasks.value)
+        }
+        taskCompletionPercentage.addSource(completedTasks) { completedCount ->
+            Log.d("TaskViewModel", "Completed Task Count: $completedCount")
+            updateTaskCompletionPercentage(totalTasks.value, completedCount)
+        }
+        //insertSampleDataInCategory()
+        //insertSampleData()
+
+    }
+    private fun updateTaskCompletionPercentage(total: Int?, completed: Int?) {
+        if (total != null && completed != null && total > 0) {
+            taskCompletionPercentage.value = (completed.toDouble() / total * 100).toInt()
+            Log.d("TaskViewModel", "Completion Percentage: ${taskCompletionPercentage.value}")
+        } else {
+            taskCompletionPercentage.value = 0
+            Log.d("TaskViewModel", "Completion Percentage: 0")
+        }
+    }
+    fun getTotalTaskCount(): LiveData<Int> {
+        return repository.getTotalTaskCount()
     }
 
+    fun getCompletedTaskCount(): LiveData<Int> {
+        return repository.getCompletedTaskCount()
+    }
+    fun getTasksByCategory(categoryId: Int): LiveData<List<Task>> {
+        return repository.getTasksByCategory(categoryId)
+    }
+
+
+    fun getTasksByCategoryForCurrentDay(categoryId: Int): LiveData<List<Task>> {
+        return repository.getTasksByCategoryForCurrentDay(categoryId)
+    }
     fun insert(task: Task) {
         viewModelScope.launch {
             repository.insert(task)
         }
+    }
+
+    fun insertCategory(category: Category) {
+        viewModelScope.launch { repository.insertCategory(category) }
+
     }
 
     fun update(task: Task) {
@@ -46,37 +99,38 @@ class TaskViewModel(application: Application) : AndroidViewModel(application) {
             repository.delete(task)
         }
     }
+
     private fun insertSampleData() {
         val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
         val sampleTasks = listOf(
             Task(
-                title = "Sample Task 1",
-                description = "This is a sample task description 1",
+                title = "Gym",
+                description = "Go to the gym. Don't skip leg day",
                 creationTime = System.currentTimeMillis(),
-                completionTime = dateFormat.parse("2024-06-10 10:00")!!,
+                completionTime = dateFormat.parse("2024-06-13 21:00")!!,
                 isCompleted = false,
                 notificationEnabled = false,
-                categoryId = null,
+                categoryId = 1,
                 hasAttachments = false
             ),
             Task(
-                title = "Sample Task 2",
+                title = "Business meeting with Microsoft",
                 description = "This is a sample task description 2",
                 creationTime = System.currentTimeMillis(),
-                completionTime = dateFormat.parse("2024-06-09 03:00")!!,
-                isCompleted = false,
+                completionTime = dateFormat.parse("2024-06-012 15:00")!!,
+                isCompleted = true,
                 notificationEnabled = false,
-                categoryId = null,
+                categoryId = 2,
                 hasAttachments = true
             ),
             Task(
-                title = "Sample Task 3",
-                description = "This is a sample task description 3",
+                title = "Sample Task new",
+                description = "This is a sample task description new",
                 creationTime = System.currentTimeMillis(),
                 completionTime = dateFormat.parse("2024-06-11 05:00")!!,
                 isCompleted = true,
                 notificationEnabled = false,
-                categoryId = null,
+                categoryId = 3,
                 hasAttachments = false
             )
         )
@@ -84,4 +138,23 @@ class TaskViewModel(application: Application) : AndroidViewModel(application) {
             insert(task)
         }
     }
+
+    private fun insertSampleDataInCategory() {
+
+        val Category = listOf(
+            Category(
+                name = "Personal",
+            ),
+            Category(
+                name = "Business",
+            ),
+            Category(
+                name = "Groceries",
+            ),
+        )
+        Category.forEach { category ->
+            insertCategory(category)
+        }
+    }
+
 }

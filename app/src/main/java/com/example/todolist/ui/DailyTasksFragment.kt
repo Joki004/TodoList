@@ -1,28 +1,35 @@
 package com.example.todolist.ui
 
+import android.annotation.SuppressLint
 import android.app.AlertDialog
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
 import android.widget.ImageView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.todolist.R
-import com.example.todolist.TaskAdapter
+import com.example.todolist.adapter.TaskAdapter
 import com.example.todolist.helpers.observeAllTasks
 import com.example.todolist.helpers.observeCompletedTasks
+import com.example.todolist.helpers.observeCompletedTasksForCurrentDay
 import com.example.todolist.helpers.observePendingTasks
+import com.example.todolist.helpers.observePendingTasksForCurrentDay
 import com.example.todolist.helpers.observeTasksForCurrentDay
 import com.example.todolist.helpers.observeUrgentTasks
+import com.example.todolist.helpers.observeUrgentTasksForCurrentDay
+import com.example.todolist.helpers.showCategoryDialog
 import com.example.todolist.viewmodel.TaskViewModel
 
 class DailyTasksFragment : Fragment(R.layout.fragment_task_item_timeline) {
     private var currentFilter: Int=0
     private lateinit var taskAdapter: TaskAdapter
     private lateinit var taskViewModel: TaskViewModel
+    @SuppressLint("MissingInflatedId")
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -41,6 +48,11 @@ class DailyTasksFragment : Fragment(R.layout.fragment_task_item_timeline) {
         filterButton.setOnClickListener {
             showFilterOptions(currentFilter)
         }
+
+        val categoriesButtons: Button = rootView.findViewById(R.id.category_name)
+        categoriesButtons.setOnClickListener {
+            showCategoryDialog(requireContext(),viewLifecycleOwner,taskViewModel,taskAdapter,categoriesButtons,true)
+        }
         return rootView
     }
 
@@ -51,10 +63,10 @@ class DailyTasksFragment : Fragment(R.layout.fragment_task_item_timeline) {
             .setTitle("Select Filter")
             .setSingleChoiceItems(filterOptions, currentFilter) { dialog, which ->
                 when (which) {
-                    0 -> observeAllTasks(viewLifecycleOwner, taskViewModel, taskAdapter)
-                    1 -> observePendingTasks(viewLifecycleOwner, taskViewModel, taskAdapter)
-                    2 -> observeCompletedTasks(viewLifecycleOwner, taskViewModel, taskAdapter)
-                    3 -> observeUrgentTasks(viewLifecycleOwner, taskViewModel, taskAdapter)
+                    0 -> observeTasksForCurrentDay(viewLifecycleOwner, taskViewModel, taskAdapter)
+                    1 -> observePendingTasksForCurrentDay(viewLifecycleOwner, taskViewModel, taskAdapter)
+                    2 -> observeCompletedTasksForCurrentDay(viewLifecycleOwner, taskViewModel, taskAdapter)
+                    3 -> observeUrgentTasksForCurrentDay(viewLifecycleOwner, taskViewModel, taskAdapter)
                 }
                 this.currentFilter = which
                 dialog.dismiss()

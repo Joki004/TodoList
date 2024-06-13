@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.lifecycle.LiveData
 import com.example.todolist.database.TaskDatabase
 import com.example.todolist.database.dao.TaskDao
+import com.example.todolist.database.entities.Category
 import com.example.todolist.database.entities.Task
 
 class TaskRepository(application: Application) {
@@ -14,7 +15,10 @@ class TaskRepository(application: Application) {
     val completedTasks: LiveData<List<Task>>
     val urgentTasks: LiveData<List<Task>>
     val tasksForCurrentDay: LiveData<List<Task>>
-
+    val categories: LiveData<List<Category>>
+    val getUrgentTasksForCurrentDay : LiveData<List<Task>>
+    val getPendingTasksForCurrentDay : LiveData<List<Task>>
+    val getCompletedTasksForCurrentDay : LiveData<List<Task>>
     init {
         val database = TaskDatabase.getInstance(application)
         taskDao = database.taskDao()
@@ -24,10 +28,30 @@ class TaskRepository(application: Application) {
         completedTasks = taskDao.getCompletedTasks()
         urgentTasks = taskDao.getUrgentTasks()
         tasksForCurrentDay = taskDao.getTasksForCurrentDay()
+        getUrgentTasksForCurrentDay = taskDao.getUrgentTasksForCurrentDay()
+        getPendingTasksForCurrentDay = taskDao.getPendingTasksForCurrentDay()
+        getCompletedTasksForCurrentDay = taskDao.getCompletedTasksForCurrentDay()
+        categories = taskDao.getAllCategories()
+    }
+    fun getTotalTaskCount(): LiveData<Int> {
+        return taskDao.getTotalTaskCount()
+    }
+
+    fun getCompletedTaskCount(): LiveData<Int> {
+        return taskDao.getCompletedTaskCount()
+    }
+    fun getTasksByCategory(categoryId: Int): LiveData<List<Task>> {
+        return taskDao.getTasksByCategory(categoryId)
+    }
+    fun getTasksByCategoryForCurrentDay(categoryId: Int):LiveData<List<Task>>{
+        return taskDao.getTasksByCategoryForCurrentDay(categoryId)
     }
 
     suspend fun insert(task: Task) {
         taskDao.insert(task)
+    }
+    suspend fun insertCategory(category: Category){
+        taskDao.insertCategory(category)
     }
 
     suspend fun update(task: Task) {

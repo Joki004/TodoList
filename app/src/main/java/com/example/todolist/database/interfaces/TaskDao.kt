@@ -34,11 +34,31 @@ interface TaskDao {
 
     @Query("SELECT * FROM TASK_TABLE ORDER BY completionTime DESC")
     fun getAllTasksOrderByCompletionTimeDESC(): LiveData<List<Task>>
-    @Query("SELECT * FROM task_table WHERE date(completionTime / 1000, 'unixepoch', 'localtime') = date('now', 'localtime')")
-    fun getTasksForCurrentDay(): LiveData<List<Task>>
+
     @Query("SELECT * FROM task_table WHERE isCompleted = 0 ORDER BY completionTime ASC")
     fun getUrgentTasks(): LiveData<List<Task>>
 
+    ////////////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////Daily Tasks/////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////////
+    @Query("SELECT * FROM task_table WHERE date(completionTime / 1000, 'unixepoch', 'localtime') = date('now', 'localtime')")
+    fun getTasksForCurrentDay(): LiveData<List<Task>>
+
+    @Query("SELECT * FROM task_table WHERE isCompleted = 0 and date(completionTime / 1000, 'unixepoch', 'localtime') = date('now', 'localtime') ORDER BY completionTime ASC")
+    fun getUrgentTasksForCurrentDay(): LiveData<List<Task>>
+
+    @Query("SELECT * FROM task_table WHERE isCompleted = 0 and date(completionTime / 1000, 'unixepoch', 'localtime') = date('now', 'localtime') ORDER BY completionTime ASC")
+    fun getPendingTasksForCurrentDay(): LiveData<List<Task>>
+
+    @Query("SELECT * FROM task_table WHERE isCompleted = 1 and date(completionTime / 1000, 'unixepoch', 'localtime') = date('now', 'localtime') ORDER BY completionTime ASC")
+    fun getCompletedTasksForCurrentDay(): LiveData<List<Task>>
+
+    @Query("SELECT * FROM task_table WHERE categoryId = :categoryId and date(completionTime / 1000, 'unixepoch', 'localtime') = date('now', 'localtime') ORDER BY completionTime ASC")
+    fun getTasksByCategoryForCurrentDay(categoryId: Int): LiveData<List<Task>>
+
+    ////////////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////OTHER CRUD'S/////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////////
     @Query("SELECT * FROM task_table WHERE title LIKE '%' || :searchQuery || '%' OR description LIKE '%' || :searchQuery || '%' ORDER BY completionTime ASC")
     fun searchTasks(searchQuery: String): LiveData<List<Task>>
 
@@ -59,4 +79,10 @@ interface TaskDao {
 
     @Query("SELECT * FROM category_table ORDER BY name ASC")
     fun getAllCategories(): LiveData<List<Category>>
+
+    @Query("SELECT COUNT(*) FROM task_table")
+    fun getTotalTaskCount(): LiveData<Int>
+
+    @Query("SELECT COUNT(*) FROM task_table WHERE isCompleted = 1")
+    fun getCompletedTaskCount(): LiveData<Int>
 }

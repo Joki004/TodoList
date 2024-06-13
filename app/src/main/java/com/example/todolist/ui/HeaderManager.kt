@@ -2,6 +2,7 @@ package com.example.todolist.ui
 
 import android.view.View
 import android.widget.ImageView
+import android.widget.TextView
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.navigation.fragment.NavHostFragment
@@ -14,7 +15,8 @@ class HeaderManager(
     private val drawerLayout: DrawerLayout,
     private val navView: NavigationView,
     private val navHostFragment: NavHostFragment,
-    private val hamburgerIcon: ImageView
+    private val hamburgerIcon: ImageView,
+    private val headerTitle: TextView
 ) {
 
     fun initialize() {
@@ -30,6 +32,14 @@ class HeaderManager(
             drawerLayout.openDrawer(GravityCompat.START)
         }
 
-        // Add other initialization code for header layout here
+        navController.addOnDestinationChangedListener { _, destination, _ ->
+            headerTitle.text = when (destination.id) {
+                R.id.homeFragment -> "Home"
+                R.id.editTaskFragment -> "Edit Task"
+                R.id.allTasksFragment -> "All Tasks"
+                R.id.DailyTasksFragment -> "Daily Tasks"
+                else -> "Your Things"
+            }
+        }
     }
 }
