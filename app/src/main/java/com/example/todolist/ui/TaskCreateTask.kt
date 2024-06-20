@@ -87,7 +87,9 @@ class TaskCreateTask : DialogFragment() {
                     lifecycleScope.launch {
                         addNewCategory(categoryName, taskViewModel){ categoryId->
                             if(categoryId!=-1){
-                                processTask(categoryId)
+                                if(processTask(categoryId)){
+                                    dismiss()
+                                }
                             }
                             else {
                                 Toast.makeText(
@@ -268,8 +270,9 @@ class TaskCreateTask : DialogFragment() {
         addDialog.show()
     }
 
-    private fun processTask(categoryId: Int) {
+    private fun processTask(categoryId: Int):Boolean {
         val taskDateTimeMillis = getDateTimeMillis(date!!, time!!)
+        if(UrlFile!=null)hasAttachment=true
         taskDateTimeMillis?.let {
             val taskDateTime = Date(it)
             val task = Task(
@@ -288,8 +291,10 @@ class TaskCreateTask : DialogFragment() {
                     handleFileSelection(UrlFile!!, taskViewModel, requireContext())
                 }
             }
+            return true
         } ?: run {
             Toast.makeText(context, "Invalid date or time", Toast.LENGTH_SHORT).show()
+            return false
         }
     }
 

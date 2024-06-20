@@ -42,14 +42,22 @@ class TaskAdapter(private val isDaily: Boolean = false) : ListAdapter<Task, Task
     override fun onBindViewHolder(holder: TaskHolder, position: Int) {
         val currentTask = getItem(position)
         holder.textViewTitle.text = currentTask.title
-        holder.textViewDescription.text = currentTask.description.substring(0,20)+"..."
+        holder.textViewDescription.text =
+            if (currentTask.description.length >= 20) currentTask.description.substring(
+                0,
+                20
+            ) + "..." else currentTask.description
         holder.taskTime.text = formatDate(currentTask.completionTime)
         holder.taskStatus.text = getStatusText(currentTask.isCompleted, currentTask.completionTime)
         if (getStatusText(currentTask.isCompleted, currentTask.completionTime) == "Completed") {
             holder.taskStatus.setTextColor(Color.GREEN)
         } else if (getStatusText(currentTask.isCompleted, currentTask.completionTime) == "late") {
             holder.taskStatus.setTextColor(Color.RED)
-        } else if (getStatusText(currentTask.isCompleted, currentTask.completionTime) == "Not completed yet") {
+        } else if (getStatusText(
+                currentTask.isCompleted,
+                currentTask.completionTime
+            ) == "Not completed yet"
+        ) {
             holder.taskStatus.setTextColor(Color.BLACK)
         }
 

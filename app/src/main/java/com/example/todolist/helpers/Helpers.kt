@@ -139,8 +139,10 @@ fun getFileName(uri: Uri, context: Context): String {
 suspend fun addNewCategory(name: String, taskViewModel: TaskViewModel, callback: (Int) -> Unit) {
     val categories = Categories.categoryList ?: mutableListOf()
 
-    if (categories.any { it.name == name }) {
-        callback(-1) // Category already exists, return -1
+    val existingCategory = categories.find { it.name == name }
+    if (existingCategory != null) {
+        // If the category exists, return its ID
+        callback(existingCategory.id)
     } else {
 
             val categoryId = taskViewModel.insertCategoryAndGetId(name)
