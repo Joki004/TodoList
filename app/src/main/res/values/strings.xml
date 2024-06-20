@@ -3,4 +3,5 @@
     <string name="select_category">select category</string>
     <string name="title">Title</string>
     <string name="todo_list">Todo List</string>
+    <string name="attachement_icon">Attachement Icon</string>
 </resources>

@@ -6,6 +6,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MediatorLiveData
 import androidx.lifecycle.viewModelScope
+import com.example.todolist.database.entities.Attachment
 import com.example.todolist.database.entities.Category
 import com.example.todolist.database.entities.Task
 import com.example.todolist.repository.TaskRepository
@@ -83,9 +84,33 @@ class TaskViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun insertCategory(category: Category) {
-        viewModelScope.launch { repository.insertCategory(category) }
+    fun insertCategory(categoryName: String) {
+        if (categoryName.isNotEmpty()) {
+            val newCategory = Category(name = categoryName) // Assuming the Category class has an appropriate constructor
+            viewModelScope.launch {
+                repository.insertCategory(newCategory)
+            }
+        } else {
+            Log.e("Category", "Error inserting new category")
+        }
 
+
+    }
+
+    suspend fun insertCategoryAndGetId(categoryName: String): Int {
+        if (categoryName.isEmpty()) {
+            Log.e("TaskViewModel", "Category name is empty")
+            return -1
+        }
+        repository.insertCategory(Category(name = categoryName))
+        return repository.getLastCategoryId()
+    }
+    suspend fun addAttachment(attachment: Attachment) {
+        repository.addAttachment(attachment)
+    }
+
+    fun getAttachmentsForTask(taskId: Int): LiveData<List<Attachment>> {
+        return repository.getAttachmentsForTask(taskId)
     }
 
     fun update(task: Task) {
@@ -93,6 +118,7 @@ class TaskViewModel(application: Application) : AndroidViewModel(application) {
             repository.update(task)
         }
     }
+
 
     fun delete(task: Task) {
         viewModelScope.launch {
@@ -153,8 +179,20 @@ class TaskViewModel(application: Application) : AndroidViewModel(application) {
             ),
         )
         Category.forEach { category ->
-            insertCategory(category)
+            insertCategory(category.name)
         }
     }
+
+    suspend fun getLastTaskId(): Int {
+        return repository.getLastTaskId()
+    }
+
+    suspend fun getLastCategoryId(): Int{
+        return repository.getLastCategoryId()
+    }
+    suspend fun getCategoryId(name : String): Int {
+        return repository.getCategoryId(name)
+    }
+
 
 }

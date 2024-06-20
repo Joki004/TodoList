@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.lifecycle.LiveData
 import com.example.todolist.database.TaskDatabase
 import com.example.todolist.database.dao.TaskDao
+import com.example.todolist.database.entities.Attachment
 import com.example.todolist.database.entities.Category
 import com.example.todolist.database.entities.Task
 
@@ -16,6 +17,7 @@ class TaskRepository(application: Application) {
     val urgentTasks: LiveData<List<Task>>
     val tasksForCurrentDay: LiveData<List<Task>>
     val categories: LiveData<List<Category>>
+
     val getUrgentTasksForCurrentDay : LiveData<List<Task>>
     val getPendingTasksForCurrentDay : LiveData<List<Task>>
     val getCompletedTasksForCurrentDay : LiveData<List<Task>>
@@ -61,4 +63,24 @@ class TaskRepository(application: Application) {
     suspend fun delete(task: Task) {
         taskDao.delete(task)
     }
+
+    suspend fun addAttachment(attachment: Attachment) {
+        taskDao.insertAttachment(attachment)
+    }
+
+    fun getAttachmentsForTask(taskId: Int): LiveData<List<Attachment>> {
+        return taskDao.getAttachmentsForTask(taskId)
+    }
+
+     suspend fun getLastTaskId(): Int{
+        return taskDao.getLastTaskId()
+    }
+    suspend fun getLastCategoryId(): Int {
+        return taskDao.getLastCategoryId()
+    }
+   suspend fun getCategoryId(name : String): Int {
+        return taskDao.getCategoryId(name)
+    }
+
+
 }

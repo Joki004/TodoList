@@ -37,6 +37,8 @@ interface TaskDao {
 
     @Query("SELECT * FROM task_table WHERE isCompleted = 0 ORDER BY completionTime ASC")
     fun getUrgentTasks(): LiveData<List<Task>>
+    @Query("SELECT id FROM task_table ORDER BY id DESC LIMIT 1")
+    suspend fun getLastTaskId(): Int
 
     ////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////Daily Tasks/////////////////////////////////////////////
@@ -73,7 +75,11 @@ interface TaskDao {
 
     @Update
     suspend fun updateCategory(category: Category)
+    @Query("SELECT id FROM category_table ORDER BY id DESC LIMIT 1")
+    suspend fun getLastCategoryId(): Int
 
+    @Query("SELECT id FROM category_table WHERE name = :name ORDER BY id DESC LIMIT 1")
+    suspend fun getCategoryId(name : String): Int
     @Delete
     suspend fun deleteCategory(category: Category)
 

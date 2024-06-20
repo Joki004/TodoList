@@ -103,3 +103,4 @@ fun observeCategories(
         categoryAdapter.submitList(Categories.categoryList)
     })
 }
+

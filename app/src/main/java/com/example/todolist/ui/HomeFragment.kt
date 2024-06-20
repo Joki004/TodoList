@@ -49,7 +49,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         // Initialize FloatingActionButton
         val fab: FloatingActionButton = rootView.findViewById(R.id.fab)
         fab.setOnClickListener {
-            // Handle the click event to add new tasks
+            TaskCreateTask.newInstance().show(parentFragmentManager, "create_task")
         }
 
         return rootView
