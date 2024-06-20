@@ -7,6 +7,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.ImageView
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -37,7 +38,11 @@ class AllTasksFragment : Fragment(R.layout.fragment_task_item) {
 
         val recyclerView: RecyclerView = rootView.findViewById(R.id.recycler_view)
         recyclerView.layoutManager = LinearLayoutManager(context)
-        taskAdapter = TaskAdapter(isDaily = false)
+        taskAdapter = TaskAdapter(isDaily = false) { taskId ->
+            // Handle the task click here
+            Toast.makeText(context, "Clicked task ID: $taskId", Toast.LENGTH_SHORT).show()
+        }
+
         recyclerView.adapter = taskAdapter
 
         categoryAdapter = CategoryAdapter()
@@ -54,6 +59,8 @@ class AllTasksFragment : Fragment(R.layout.fragment_task_item) {
         categoriesButtons.setOnClickListener {
             showCategoryDialog(requireContext(),viewLifecycleOwner,taskViewModel,taskAdapter,categoriesButtons)
         }
+
+
         return rootView
     }
 

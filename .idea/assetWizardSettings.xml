@@ -19,8 +19,8 @@
                         <option name="values">
                           <map>
                             <entry key="assetSourceType" value="FILE" />
-                            <entry key="outputName" value="ic_filter" />
-                            <entry key="sourceFile" value="C:\Users\joram\Desktop\pdfs\filter-tool-svgrepo-com.svg" />
+                            <entry key="outputName" value="ic_search" />
+                            <entry key="sourceFile" value="C:\Users\joram\Desktop\pdfs\icons8-chercher.svg" />
                           </map>
                         </option>
                       </PersistentState>

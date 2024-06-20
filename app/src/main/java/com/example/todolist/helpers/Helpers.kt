@@ -105,22 +105,36 @@ fun showCategoryDialog(
 }
 
 
-suspend fun handleFileSelection(uri: Uri, taskViewModel: TaskViewModel, context: Context) {
+suspend fun handleFileSelection(uri: Uri, taskViewModel: TaskViewModel, context: Context, callback: (Boolean) -> Unit) {
     withContext(Dispatchers.IO) {  // Ensure you are on the IO thread for file and database operations
-        val fileName = getFileName(uri, context)
-        val fileType = context.contentResolver.getType(uri)
-        val taskId =
-            taskViewModel.getLastTaskId()  // Make sure this is handled appropriately in your ViewModel
+        try {
+            val fileName = getFileName(uri, context)
+            val fileType = context.contentResolver.getType(uri)
+            val taskId = withContext(Dispatchers.IO) {
+                taskViewModel.getLastTaskId()
+            }
 
-        val attachment = Attachment(
-            taskId = taskId,
-            filePath = fileName,
-            fileType = fileType ?: "unknown"
-        )
 
-        taskViewModel.addAttachment(attachment)  // Update your database or LiveData here
+            if (taskId != -1) {
+                val attachment = Attachment(
+                    taskId = taskId,
+                    filePath = fileName,
+                    fileType = fileType ?: "unknown"
+                )
+
+                taskViewModel.addAttachment(attachment)  // Update your database or LiveData here
+                callback(true)  // Successfully added the attachment
+            } else {
+                Log.e("FileSelection", "Failed to retrieve task ID for attachment")
+                callback(false)  // Failed to add the attachment due to task ID retrieval failure
+            }
+        } catch (e: Exception) {
+            Log.e("FileSelection", "Error handling file selection: ${e.message}")
+            callback(false)  // Failed to add the attachment due to an exception
+        }
     }
 }
+
 
 @SuppressLint("Range")
 fun getFileName(uri: Uri, context: Context): String {

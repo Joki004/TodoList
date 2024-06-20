@@ -288,9 +288,22 @@ class TaskCreateTask : DialogFragment() {
             taskViewModel.insert(task)
             if (hasAttachment && UrlFile != null) {
                 lifecycleScope.launch {
-                    handleFileSelection(UrlFile!!, taskViewModel, requireContext())
+                    handleFileSelection(UrlFile!!, taskViewModel, requireContext()) { success ->
+                        if (success) {
+                            // If the attachment was successfully added
+                            activity?.runOnUiThread {
+                                Toast.makeText(context, "Attachment successfully added.", Toast.LENGTH_SHORT).show()
+                            }
+                        } else {
+                            // If there was an error adding the attachment
+                            activity?.runOnUiThread {
+                                Toast.makeText(context, "Failed to add attachment.", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                    }
                 }
             }
+
             return true
         } ?: run {
             Toast.makeText(context, "Invalid date or time", Toast.LENGTH_SHORT).show()

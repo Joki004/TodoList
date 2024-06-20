@@ -1,6 +1,7 @@
 package com.example.todolist.ui
 
 import android.annotation.SuppressLint
+import android.graphics.PorterDuff
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -10,7 +11,9 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.ProgressBar
+import android.widget.SearchView
 import android.widget.TextView
+import androidx.core.content.ContextCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentTransaction
@@ -18,6 +21,7 @@ import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.NavHostFragment
 import com.example.todolist.R
+import com.example.todolist.R.color.white
 import com.example.todolist.viewmodel.TaskViewModel
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.navigation.NavigationView
@@ -33,7 +37,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
     private val updateTimeRunnable = object : Runnable {
         @SuppressLint("SimpleDateFormat")
         override fun run() {
-            val sdf = SimpleDateFormat("dd MMM a")
+            val sdf = SimpleDateFormat("dd MMM ")
             Log.d("HomeFragment", "Updating date to: ${sdf.format(Date())}")
             headerDate.text = sdf.format(Date())
             handler.postDelayed(this, 60000) // Update every minute
@@ -66,8 +70,9 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                 requireActivity().supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
             val hamburgerIcon: ImageView = view.findViewById(R.id.hamburger_icon)
             val headerTitle: TextView = view.findViewById(R.id.header_title)
-            headerDate = view.findViewById(R.id.header_date) // Initialize headerDate TextView
+            headerDate = view.findViewById(R.id.header_date)
             val headerProgress: ProgressBar = view.findViewById(R.id.progressBar)
+
 
             headerManager = HeaderManager(
                 drawerLayout, navView, navHostFragment, hamburgerIcon,
