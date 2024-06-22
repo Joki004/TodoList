@@ -17,7 +17,11 @@ import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 
-class TaskAdapter(private val isDaily: Boolean = false, private val onTaskClick: (Int) -> Unit) : ListAdapter<Task, TaskAdapter.TaskHolder>(
+class TaskAdapter(
+    private val isDaily: Boolean = false,
+    private val onTaskClick: (Int) -> Unit,
+    private val onTaskLongClick: (Task) -> Unit
+) : ListAdapter<Task, TaskAdapter.TaskHolder>(
     DIFF_CALLBACK
 ) {
     companion object {
@@ -41,7 +45,7 @@ class TaskAdapter(private val isDaily: Boolean = false, private val onTaskClick:
     @SuppressLint("SetTextI18n")
     override fun onBindViewHolder(holder: TaskHolder, position: Int) {
         val currentTask = getItem(position)
-        holder.bind(currentTask, onTaskClick)
+        holder.bind(currentTask, onTaskClick, onTaskLongClick)
 
     }
 
@@ -52,7 +56,7 @@ class TaskAdapter(private val isDaily: Boolean = false, private val onTaskClick:
         val taskTime: TextView = itemView.findViewById(R.id.task_time)
         val taskAttachments: ImageView = itemView.findViewById(R.id.task_attachment)
         val taskStatus: TextView = itemView.findViewById(R.id.task_status)
-        fun bind(task: Task, onTaskClick: (Int) -> Unit) {
+        fun bind(task: Task, onTaskClick: (Int) -> Unit, onTaskLongClick: (Task) -> Unit) {
             textViewTitle.text = task.title
             textViewDescription.text = if (task.description.length >= 20) "${
                 task.description.substring(
@@ -76,6 +80,11 @@ class TaskAdapter(private val isDaily: Boolean = false, private val onTaskClick:
 
             itemView.setOnClickListener {
                 onTaskClick(task.id)
+            }
+
+            itemView.setOnLongClickListener {
+                onTaskLongClick(task)
+                true
             }
 
         }

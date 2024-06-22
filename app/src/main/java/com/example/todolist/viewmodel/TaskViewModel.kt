@@ -129,6 +129,12 @@ class TaskViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun deleteCategory(category: Category){
+        viewModelScope.launch {
+            repository.deleteCategory(category)
+        }
+    }
+
     private fun insertSampleData() {
         val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
         val sampleTasks = listOf(

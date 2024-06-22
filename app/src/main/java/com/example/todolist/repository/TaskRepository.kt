@@ -64,6 +64,10 @@ class TaskRepository(application: Application) {
         taskDao.delete(task)
     }
 
+    suspend fun deleteCategory(category: Category){
+        taskDao.deleteCategory(category)
+    }
+
     suspend fun addAttachment(attachment: Attachment) {
         taskDao.insertAttachment(attachment)
     }

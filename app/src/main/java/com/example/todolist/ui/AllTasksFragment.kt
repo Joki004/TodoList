@@ -24,6 +24,8 @@ import com.example.todolist.helpers.observePendingTasks
 import com.example.todolist.helpers.observeUrgentTasks
 import com.example.todolist.helpers.observeUrgentTasksForCurrentDay
 import com.example.todolist.helpers.showCategoryDialog
+import com.example.todolist.helpers.showDeleteCategoryConfirmationDialog
+import com.example.todolist.helpers.showDeleteConfirmationDialog
 import com.example.todolist.viewmodel.TaskViewModel
 
 class AllTasksFragment : Fragment(R.layout.fragment_task_item) {
@@ -40,17 +42,20 @@ class AllTasksFragment : Fragment(R.layout.fragment_task_item) {
 
         val recyclerView: RecyclerView = rootView.findViewById(R.id.recycler_view)
         recyclerView.layoutManager = LinearLayoutManager(context)
-        taskAdapter = TaskAdapter(isDaily = false) { taskId ->
+        taskAdapter = TaskAdapter(isDaily = false, onTaskClick = { taskId ->
             Log.d("Navigation", "Task ID: $taskId")
             val action = HomeFragmentDirections.actionHomeFragmentToEditTaskFragment(taskId.toString())
             Log.d("Navigation", "Action: $action")
             NavHostFragment.findNavController(requireParentFragment()).navigate(action)
-
-        }
+        }, onTaskLongClick = { task ->
+            showDeleteConfirmationDialog(task, requireContext(), taskViewModel)
+        })
 
         recyclerView.adapter = taskAdapter
 
-        categoryAdapter = CategoryAdapter()
+        categoryAdapter = CategoryAdapter(isDaily = false, onCategoryLongClick = { category ->
+            showDeleteCategoryConfirmationDialog(category, requireContext(), taskViewModel)
+        })
         taskViewModel = ViewModelProvider(this).get(TaskViewModel::class.java)
 
         observeAllTasks(viewLifecycleOwner, taskViewModel, taskAdapter)

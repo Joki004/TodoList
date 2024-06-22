@@ -16,6 +16,7 @@ import androidx.navigation.fragment.NavHostFragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.todolist.R
+import com.example.todolist.adapter.CategoryAdapter
 import com.example.todolist.adapter.TaskAdapter
 import com.example.todolist.helpers.observeAllTasks
 import com.example.todolist.helpers.observeCompletedTasks
@@ -26,11 +27,14 @@ import com.example.todolist.helpers.observeTasksForCurrentDay
 import com.example.todolist.helpers.observeUrgentTasks
 import com.example.todolist.helpers.observeUrgentTasksForCurrentDay
 import com.example.todolist.helpers.showCategoryDialog
+import com.example.todolist.helpers.showDeleteCategoryConfirmationDialog
+import com.example.todolist.helpers.showDeleteConfirmationDialog
 import com.example.todolist.viewmodel.TaskViewModel
 
 class DailyTasksFragment : Fragment(R.layout.fragment_task_item_timeline) {
     private var currentFilter: Int=0
     private lateinit var taskAdapter: TaskAdapter
+    private lateinit var categoryAdapter: CategoryAdapter
     private lateinit var taskViewModel: TaskViewModel
     @SuppressLint("MissingInflatedId")
     override fun onCreateView(
@@ -41,17 +45,21 @@ class DailyTasksFragment : Fragment(R.layout.fragment_task_item_timeline) {
 
         val recyclerView: RecyclerView = rootView.findViewById(R.id.recycler_view)
         recyclerView.layoutManager = LinearLayoutManager(context)
-        taskAdapter = TaskAdapter(isDaily = false) { taskId ->
+        taskAdapter = TaskAdapter(isDaily = false, onTaskClick = { taskId ->
             Log.d("Navigation", "Task ID: $taskId")
             val action = HomeFragmentDirections.actionHomeFragmentToEditTaskFragment(taskId.toString())
             Log.d("Navigation", "Action: $action")
             NavHostFragment.findNavController(requireParentFragment()).navigate(action)
-            Toast.makeText(context, "Clicked task ID: $taskId", Toast.LENGTH_SHORT).show()
-        }
+        }, onTaskLongClick = { task ->
+            showDeleteConfirmationDialog(task, requireContext(), taskViewModel)
+        })
+
         recyclerView.adapter = taskAdapter
 
         taskViewModel = ViewModelProvider(this).get(TaskViewModel::class.java)
-
+        categoryAdapter = CategoryAdapter(isDaily = true, onCategoryLongClick = { category ->
+            showDeleteCategoryConfirmationDialog(category, requireContext(), taskViewModel)
+        })
         observeTasksForCurrentDay(viewLifecycleOwner, taskViewModel, taskAdapter)
         val filterButton: ImageView = rootView.findViewById(R.id.ic_filter)
         filterButton.setOnClickListener {

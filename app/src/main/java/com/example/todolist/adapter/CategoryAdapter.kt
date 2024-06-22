@@ -11,7 +11,7 @@ import com.example.todolist.R
 import com.example.todolist.database.entities.Category
 import com.example.todolist.helpers.Categories.categoryIndex
 
-class CategoryAdapter(private val isDaily: Boolean = false) : ListAdapter<Category, CategoryAdapter.CategoryHolder>(DIFF_CALLBACK) {
+class CategoryAdapter(private val isDaily: Boolean = false, private val onCategoryLongClick: (Category) -> Unit) : ListAdapter<Category, CategoryAdapter.CategoryHolder>(DIFF_CALLBACK) {
 
     companion object {
         private val DIFF_CALLBACK = object : DiffUtil.ItemCallback<Category>() {
@@ -35,9 +35,17 @@ class CategoryAdapter(private val isDaily: Boolean = false) : ListAdapter<Catego
     override fun onBindViewHolder(holder: CategoryHolder, position: Int) {
         val currentCategory = getItem(position)
         holder.textViewName.text = (categoryList?.get(categoryIndex) ?: currentCategory.name).toString()
+        holder.bind(currentCategory, onCategoryLongClick)
     }
 
     class CategoryHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val textViewName: TextView = itemView.findViewById(R.id.category_name)
+
+        fun bind(category: Category, onCategoryLongClick: (Category) -> Unit) {
+            itemView.setOnLongClickListener {
+                onCategoryLongClick(category)
+                true
+            }
+        }
     }
 }

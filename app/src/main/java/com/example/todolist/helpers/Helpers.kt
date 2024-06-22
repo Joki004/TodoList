@@ -9,12 +9,14 @@ import android.provider.OpenableColumns
 import android.util.Log
 import android.widget.Button
 import android.widget.EditText
+import android.widget.Toast
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.Observer
 import com.example.todolist.adapter.TaskAdapter
 import com.example.todolist.database.entities.Attachment
 import com.example.todolist.database.entities.Category
+import com.example.todolist.database.entities.Task
 import com.example.todolist.viewmodel.TaskViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -196,6 +198,30 @@ fun formatDateTime(taskDate: Date): Pair<String, String> {
     val timeString = timeFormat.format(taskDate)
 
     return Pair(dateString, timeString)
+}
+
+fun showDeleteConfirmationDialog(task: Task, context: Context, taskViewModel: TaskViewModel) {
+    AlertDialog.Builder(context)
+        .setTitle("Delete Task")
+        .setMessage("Do you really want to delete ${task.title}?")
+        .setPositiveButton("Yes") { _, _ ->
+            taskViewModel.delete(task)
+            Toast.makeText(context, "Task deleted", Toast.LENGTH_SHORT).show()
+        }
+        .setNegativeButton("No", null)
+        .show()
+}
+
+fun showDeleteCategoryConfirmationDialog(category: Category, context: Context, taskViewModel: TaskViewModel) {
+    AlertDialog.Builder(context)
+        .setTitle("Delete Category")
+        .setMessage("Do you really want to delete this category?")
+        .setPositiveButton("Yes") { _, _ ->
+            taskViewModel.deleteCategory(category)
+            Toast.makeText(context, "Category deleted", Toast.LENGTH_SHORT).show()
+        }
+        .setNegativeButton("No", null)
+        .show()
 }
 
 
