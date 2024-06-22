@@ -20,6 +20,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.text.ParseException
 import java.text.SimpleDateFormat
+import java.util.Date
 import java.util.Locale
 
 
@@ -186,6 +187,18 @@ fun getDateTimeMillis(dateEditText: EditText, timeEditText: EditText): Long? {
         null
     }
 }
+
+fun formatDateTime(taskDate: Date): Pair<String, String> {
+    val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+    val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
+
+    val dateString = dateFormat.format(taskDate)
+    val timeString = timeFormat.format(taskDate)
+
+    return Pair(dateString, timeString)
+}
+
+
 
 
 

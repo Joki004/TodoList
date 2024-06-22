@@ -15,6 +15,7 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageView
+import android.widget.Switch
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
@@ -48,7 +49,7 @@ class TaskCreateTask : DialogFragment() {
     private var hasAttachment = false
     private var UrlFile: Uri? = null
     private lateinit var pickFileLauncher: ActivityResultLauncher<Array<String>>
-
+    private lateinit var taskNotificationToggle: Switch
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         pickFileLauncher =
@@ -80,6 +81,8 @@ class TaskCreateTask : DialogFragment() {
         saveButton = view.findViewById(R.id.save_task_button)
         warningMessage = view.findViewById(R.id.warning_message)
         attachement = view.findViewById(R.id.task_attachment)
+        taskNotificationToggle = view.findViewById(R.id.task_notification_toggle)
+
         warningMessage?.visibility = View.INVISIBLE
         saveButton?.setOnClickListener {
             if (checkNewTask(title!!, date!!, time!!, category!!)) {
@@ -281,7 +284,7 @@ class TaskCreateTask : DialogFragment() {
                 creationTime = System.currentTimeMillis(),
                 completionTime = taskDateTime,
                 isCompleted = false,
-                notificationEnabled = true,
+                notificationEnabled = taskNotificationToggle.isChecked,
                 categoryId = categoryId,
                 hasAttachments = hasAttachment
             )

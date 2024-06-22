@@ -1,9 +1,12 @@
 package com.example.todolist.helpers
 
+import android.content.Context
+import android.widget.Toast
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.Observer
 import com.example.todolist.adapter.TaskAdapter
 import com.example.todolist.adapter.CategoryAdapter
+import com.example.todolist.database.entities.Task
 import com.example.todolist.viewmodel.TaskViewModel
 
 
@@ -103,4 +106,22 @@ fun observeCategories(
         categoryAdapter.submitList(Categories.categoryList)
     })
 }
+
+
+fun observeTaskById(
+    context: Context,
+    lifecycleOwner: LifecycleOwner,
+    taskViewModel: TaskViewModel,
+    taskId: Int,
+    taskDisplayFunction: (Task) -> Unit
+) {
+    taskViewModel.loadTaskById(taskId)
+    taskViewModel.taskById.observe(lifecycleOwner, Observer { task ->
+        task?.let {
+            taskDisplayFunction(it)
+        } ?: Toast.makeText(context, "Task not found.", Toast.LENGTH_SHORT).show()
+    })
+}
+
+
 

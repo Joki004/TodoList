@@ -8,25 +8,43 @@
         android:id="@+id/homeFragment"
         android:name="com.example.todolist.ui.HomeFragment"
         android:label="Home"
-        tools:layout="@layout/fragment_home" />
+        tools:layout="@layout/fragment_home" >
+        <action
+            android:id="@+id/action_homeFragment_to_editTaskFragment"
+            app:destination="@id/editTaskFragment" />
+    </fragment>
 
     <fragment
         android:id="@+id/editTaskFragment"
         android:name="com.example.todolist.ui.EditTaskFragment"
         android:label="Edit Task"
-        tools:layout="@layout/fragment_edit_task" />
+        tools:layout="@layout/fragment_edit_task">
+        <argument
+            android:name="taskId"
+            app:argType="string" />
+    </fragment>
 
     <fragment
         android:id="@+id/allTasksFragment"
         android:name="com.example.todolist.ui.AllTasksFragment"
         android:label="All Tasks"
-        tools:layout="@layout/daily_task" />
+        tools:layout="@layout/all_tasks"
+
+        >
+        <action
+            android:id="@+id/action_allTasksFragment_to_editTaskFragment"
+            app:destination="@id/editTaskFragment" />
+    </fragment>
 
     <fragment
         android:id="@+id/DailyTasksFragment"
         android:name="com.example.todolist.ui.DailyTasksFragment"
         android:label="Daily Tasks"
-        tools:layout="@layout/all_tasks" />
+        tools:layout="@layout/daily_task">
+        <action
+            android:id="@+id/action_dailyTasksFragment_to_editTaskFragment"
+            app:destination="@id/editTaskFragment" />
+    </fragment>
 
     <!-- Add more fragments as needed -->
 

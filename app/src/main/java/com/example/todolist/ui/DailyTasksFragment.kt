@@ -3,6 +3,7 @@ package com.example.todolist.ui
 import android.annotation.SuppressLint
 import android.app.AlertDialog
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -11,6 +12,7 @@ import android.widget.ImageView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
+import androidx.navigation.fragment.NavHostFragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.todolist.R
@@ -40,7 +42,10 @@ class DailyTasksFragment : Fragment(R.layout.fragment_task_item_timeline) {
         val recyclerView: RecyclerView = rootView.findViewById(R.id.recycler_view)
         recyclerView.layoutManager = LinearLayoutManager(context)
         taskAdapter = TaskAdapter(isDaily = false) { taskId ->
-            // Handle the task click here
+            Log.d("Navigation", "Task ID: $taskId")
+            val action = HomeFragmentDirections.actionHomeFragmentToEditTaskFragment(taskId.toString())
+            Log.d("Navigation", "Action: $action")
+            NavHostFragment.findNavController(requireParentFragment()).navigate(action)
             Toast.makeText(context, "Clicked task ID: $taskId", Toast.LENGTH_SHORT).show()
         }
         recyclerView.adapter = taskAdapter

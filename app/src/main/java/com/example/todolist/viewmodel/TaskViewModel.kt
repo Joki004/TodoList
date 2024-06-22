@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MediatorLiveData
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import com.example.todolist.database.entities.Attachment
 import com.example.todolist.database.entities.Category
@@ -27,6 +28,8 @@ class TaskViewModel(application: Application) : AndroidViewModel(application) {
     val getPendingTasksForCurrentDay: LiveData<List<Task>>
     val getCompletedTasksForCurrentDay: LiveData<List<Task>>
     val taskCompletionPercentage = MediatorLiveData<Int>()
+    private val _taskById = MutableLiveData<Task?>()
+    val taskById: LiveData<Task?> get() = _taskById
     init {
         repository = TaskRepository(application)
         allTasks = repository.allTasks
@@ -194,5 +197,19 @@ class TaskViewModel(application: Application) : AndroidViewModel(application) {
         return repository.getCategoryId(name)
     }
 
-
+    suspend fun getTasksByID(taskId: Int): Task? {
+        return repository.getTasksByID(taskId)
+    }
+    fun loadTaskById(taskId: Int) {
+        viewModelScope.launch {
+            val task = repository.getTasksByID(taskId)
+            Log.d("ViewModel", "Fetching task: $taskId")
+            if (task != null) {
+                Log.d("ViewModel", "Task fetched: ${task.title}")
+                _taskById.postValue(task)
+            } else {
+                Log.d("ViewModel", "Task not found")
+            }
+        }
+    }
 }

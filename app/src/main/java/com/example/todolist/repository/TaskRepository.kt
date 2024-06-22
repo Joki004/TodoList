@@ -82,5 +82,9 @@ class TaskRepository(application: Application) {
         return taskDao.getCategoryId(name)
     }
 
+     suspend fun getTasksByID(taskId: Int):Task?{
+        return taskDao.getTasksByID(taskId)
+    }
+
 
 }
