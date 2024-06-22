@@ -12,6 +12,9 @@
         <action
             android:id="@+id/action_homeFragment_to_editTaskFragment"
             app:destination="@id/editTaskFragment" />
+        <action
+            android:id="@+id/action_homeFragment_to_SettingsFragment"
+            app:destination="@id/SettingsFragment" />
     </fragment>
 
     <fragment
@@ -46,6 +49,12 @@
             app:destination="@id/editTaskFragment" />
     </fragment>
 
-    <!-- Add more fragments as needed -->
+    <fragment
+        android:id="@+id/SettingsFragment"
+        android:name="com.example.todolist.ui.SettingsFragment"
+        android:label="Settings"
+        tools:layout="@layout/settings">
+
+    </fragment>
 
 </navigation>

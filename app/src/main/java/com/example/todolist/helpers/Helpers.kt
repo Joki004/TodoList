@@ -9,10 +9,12 @@ import android.provider.OpenableColumns
 import android.util.Log
 import android.widget.Button
 import android.widget.EditText
+import android.widget.ImageView
 import android.widget.Toast
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.Observer
+import com.example.todolist.R
 import com.example.todolist.adapter.TaskAdapter
 import com.example.todolist.database.entities.Attachment
 import com.example.todolist.database.entities.Category
@@ -24,6 +26,10 @@ import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import android.graphics.drawable.Drawable
+import androidx.core.content.ContextCompat
+import com.bumptech.glide.Glide
+import com.bumptech.glide.request.RequestOptions
 
 
 object Categories {
@@ -222,6 +228,32 @@ fun showDeleteCategoryConfirmationDialog(category: Category, context: Context, t
         }
         .setNegativeButton("No", null)
         .show()
+}
+
+object IconHelper {
+
+    private val localIcons = mapOf(
+        "Work" to R.drawable.ic_work,
+        "Personal" to R.drawable.ic_personal,
+        "Shopping" to R.drawable.ic_shopping,
+        "reading" to R.drawable.ic_task_icon,
+        "sport" to R.drawable.ic_sport,
+        "Others" to R.drawable.ic_others
+    )
+
+    fun assignIcon(context: Context, categoryName: String, imageView: ImageView) {
+        val categoryNameLowerCase = categoryName.lowercase(Locale.ROOT)
+        val iconRes = localIcons[categoryNameLowerCase]
+        if (iconRes != null) {
+            imageView.setImageResource(iconRes)
+        } else {
+            val onlineIconUrl = "https://example.com/icons/$categoryName.png"
+            Glide.with(context)
+                .load(onlineIconUrl)
+                .apply(RequestOptions().error(R.drawable.ic_others))
+                .into(imageView)
+        }
+    }
 }
 
 

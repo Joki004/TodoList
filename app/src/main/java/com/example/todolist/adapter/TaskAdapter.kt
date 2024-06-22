@@ -12,6 +12,8 @@ import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.example.todolist.R
 import com.example.todolist.database.entities.Task
+import com.example.todolist.helpers.Categories
+import com.example.todolist.helpers.IconHelper
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -56,6 +58,7 @@ class TaskAdapter(
         val taskTime: TextView = itemView.findViewById(R.id.task_time)
         val taskAttachments: ImageView = itemView.findViewById(R.id.task_attachment)
         val taskStatus: TextView = itemView.findViewById(R.id.task_status)
+        val category: ImageView = itemView.findViewById(R.id.task_icon)
         fun bind(task: Task, onTaskClick: (Int) -> Unit, onTaskLongClick: (Task) -> Unit) {
             textViewTitle.text = task.title
             textViewDescription.text = if (task.description.length >= 20) "${
@@ -75,8 +78,17 @@ class TaskAdapter(
                 taskStatus.setTextColor(Color.BLACK)
             }
 
-            taskTime.setTextColor(if (isDueSoon(task.completionTime)) Color.RED else Color.BLACK)
+            taskTime.setTextColor(
+                if (task.isCompleted) Color.BLACK
+                else {
+                    if (isDueSoon(task.completionTime)) Color.RED else Color.BLACK
+                }
+            )
             taskAttachments.visibility = if (task.hasAttachments) View.VISIBLE else View.INVISIBLE
+            val categoryName =
+                Categories.categoryList?.find { it.id == task.categoryId }?.name ?: "others"
+            IconHelper.assignIcon(itemView.context, categoryName, category)
+
 
             itemView.setOnClickListener {
                 onTaskClick(task.id)

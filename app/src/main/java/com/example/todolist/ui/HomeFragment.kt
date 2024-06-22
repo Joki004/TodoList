@@ -13,6 +13,7 @@ import android.widget.ImageView
 import android.widget.ProgressBar
 import android.widget.SearchView
 import android.widget.TextView
+import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.Fragment
@@ -98,16 +99,20 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                         headerTitle.text = "Daily Tasks"
                         replaceFragment(DailyTasksFragment())
                     }
-                    // Add other menu items if needed
+
+                    R.id.nav_settings->{
+                        Toast.makeText(context, "Attempting to open settings", Toast.LENGTH_SHORT).show()
+                        val action = HomeFragmentDirections.actionHomeFragmentToSettingsFragment()
+                        Log.d("Navigation", "Action: $action")
+                        NavHostFragment.findNavController(requireParentFragment()).navigate(action)
+                    }
+
                 }
                 drawerLayout.closeDrawers()
                 true
             }
 
-            // Set the initial fragment
             replaceFragment(AllTasksFragment())
-
-            // Start updating the time
             handler.post(updateTimeRunnable)
 
         } catch (e: Exception) {

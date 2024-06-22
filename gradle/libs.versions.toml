@@ -12,6 +12,7 @@ compiler = "1.1.1"
 constraintlayoutVersion = "2.1.4"
 coreKtxVersion = "1.13.1"
 espressoCoreVersion = "3.5.1"
+glideVersion = "4.12.0"
 googleComGoogleDevtoolsKspGradlePlugin = "2.0.0-1.0.22"
 googleMaterial = "1.12.0"
 gradle = "7.0.4"
@@ -67,6 +68,8 @@ com-google-devtools-ksp-gradle-plugin = { module = "com.google.devtools.ksp:com.
 com-google-devtools-ksp-gradle-plugin-v1810109 = { module = "com.google.devtools.ksp:com.google.devtools.ksp.gradle.plugin", version.ref = "comGoogleDevtoolsKspGradlePluginVersion" }
 com-google-devtools-ksp-gradle-plugin-v2001022 = { module = "com.google.devtools.ksp:com.google.devtools.ksp.gradle.plugin", version.ref = "googleComGoogleDevtoolsKspGradlePlugin" }
 compiler = { module = "android.arch.persistence.room:compiler", version.ref = "compiler" }
+github-glide = { module = "com.github.bumptech.glide:glide", version.ref = "glideVersion" }
+glide-compiler = { module = "com.github.bumptech.glide:compiler", version.ref = "glideVersion" }
 gradle = { module = "com.android.tools.build:gradle", version.ref = "gradle" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }

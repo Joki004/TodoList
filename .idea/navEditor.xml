@@ -13,8 +13,8 @@
                       <LayoutPositions>
                         <option name="myPosition">
                           <Point>
-                            <option name="x" value="383" />
-                            <option name="y" value="-300" />
+                            <option name="x" value="879" />
+                            <option name="y" value="-487" />
                           </Point>
                         </option>
                         <option name="myPositions">
@@ -25,6 +25,18 @@
                               </value>
                             </entry>
                           </map>
+                        </option>
+                      </LayoutPositions>
+                    </value>
+                  </entry>
+                  <entry key="SettingsFragment">
+                    <value>
+                      <LayoutPositions>
+                        <option name="myPosition">
+                          <Point>
+                            <option name="x" value="-282" />
+                            <option name="y" value="134" />
+                          </Point>
                         </option>
                       </LayoutPositions>
                     </value>
@@ -67,12 +79,17 @@
                       <LayoutPositions>
                         <option name="myPosition">
                           <Point>
-                            <option name="x" value="3" />
-                            <option name="y" value="544" />
+                            <option name="x" value="206" />
+                            <option name="y" value="326" />
                           </Point>
                         </option>
                         <option name="myPositions">
                           <map>
+                            <entry key="action_homeFragment_to_SettingsFragment">
+                              <value>
+                                <LayoutPositions />
+                              </value>
+                            </entry>
                             <entry key="action_homeFragment_to_editTaskFragment">
                               <value>
                                 <LayoutPositions />
