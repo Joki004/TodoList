@@ -21,12 +21,12 @@
         android:id="@+id/task_title_input"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_margin="20dp"
+        android:layout_margin="10dp"
         android:autoSizeTextType="uniform"
         android:background="@drawable/rounded_corners"
         android:hint="@string/title"
         android:inputType="text"
-        android:padding="10dp"
+        android:padding="5dp"
         app:layout_constraintBottom_toTopOf="@id/guideline7"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -36,7 +36,7 @@
         android:id="@+id/task_description_input"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_margin="20dp"
+        android:layout_margin="10dp"
         android:autoSizeTextType="uniform"
         android:background="@drawable/rounded_corners"
         android:hint="Description"
@@ -52,7 +52,7 @@
     <EditText
         android:id="@+id/editTextDate"
         android:layout_width="0dp"
-        android:layout_height="40dp"
+        android:layout_height="0dp"
         android:layout_margin="10dp"
         android:autoSizeTextType="uniform"
         android:background="@drawable/rounded_corners"
@@ -72,7 +72,7 @@
     <EditText
         android:id="@+id/editTextTime"
         android:layout_width="0dp"
-        android:layout_height="40dp"
+        android:layout_height="0dp"
         android:layout_margin="10dp"
         android:autoSizeTextType="uniform"
         android:background="@drawable/rounded_corners"
@@ -94,12 +94,12 @@
         android:id="@+id/task_notification_toggle"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_margin="20dp"
+        android:layout_margin="10dp"
         android:autoSizeTextType="uniform"
         android:background="@drawable/rounded_corners"
         android:breakStrategy="simple"
         android:gravity="center"
-        android:padding="10dp"
+        android:padding="5dp"
         android:text="Enable Notification"
         app:layout_constraintBottom_toTopOf="@+id/guideline9"
         app:layout_constraintEnd_toStartOf="@+id/task_status_toggle"
@@ -111,11 +111,11 @@
         android:id="@+id/task_status_toggle"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_margin="20dp"
+        android:layout_margin="10dp"
         android:autoSizeTextType="uniform"
         android:background="@drawable/rounded_corners"
         android:gravity="center"
-        android:padding="10dp"
+        android:padding="5dp"
 
         android:text="Mark as Completed"
         app:layout_constraintBottom_toTopOf="@+id/guideline9"
@@ -129,16 +129,17 @@
         android:id="@+id/task_category_spinner"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_margin="20dp"
+        android:layout_margin="10dp"
         android:autoSizeTextType="uniform"
         android:background="@drawable/rounded_corners"
         android:gravity="center"
-        android:paddingTop="8dp"
+        android:padding="8dp"
         android:prompt="@string/select_category"
         app:layout_constraintBottom_toTopOf="@+id/guideline10"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/guideline9" />
+
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/attachments_recycler_view"
         android:layout_width="0dp"
@@ -155,10 +156,9 @@
         android:id="@+id/task_attachment_button"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_margin="20dp"
+        android:layout_margin="10dp"
         android:autoSizeTextType="uniform"
         android:background="@drawable/rounded_corners"
-        android:paddingTop="8dp"
         android:text="Add Attachment"
         app:layout_constraintBottom_toTopOf="@+id/save_button"
         app:layout_constraintEnd_toEndOf="parent"
@@ -169,11 +169,10 @@
         android:id="@+id/save_button"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_margin="20dp"
+        android:layout_margin="10dp"
         android:autoSizeTextType="uniform"
         android:textSize="16sp"
         android:gravity="center"
-        android:paddingTop="16dp"
         android:text="Save"
         android:textAlignment="center"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -186,34 +185,34 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        app:layout_constraintGuide_percent="0.12" />
+        app:layout_constraintGuide_percent="0.11" />
 
     <androidx.constraintlayout.widget.Guideline
         android:id="@+id/guideline8"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        app:layout_constraintGuide_percent="0.30" />
+        app:layout_constraintGuide_percent="0.25" />
 
     <androidx.constraintlayout.widget.Guideline
         android:id="@+id/guideline9"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        app:layout_constraintGuide_percent="0.50" />
+        app:layout_constraintGuide_percent="0.45" />
 
     <androidx.constraintlayout.widget.Guideline
         android:id="@+id/guideline10"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
         android:orientation="horizontal"
-        app:layout_constraintGuide_percent="0.60" />
+        app:layout_constraintGuide_percent="0.55" />
 
     <androidx.constraintlayout.widget.Guideline
         android:id="@+id/guideline14"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        app:layout_constraintGuide_percent="0.75" />
+        app:layout_constraintGuide_percent="0.80" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -245,12 +245,12 @@ fun showDeleteCategoryConfirmationDialog(category: Category, context: Context, t
 object IconHelper {
 
     private val localIcons = mapOf(
-        "Work" to R.drawable.ic_work,
-        "Personal" to R.drawable.ic_personal,
-        "Shopping" to R.drawable.ic_shopping,
+        "work" to R.drawable.ic_work,
+        "personal" to R.drawable.ic_personal,
+        "shopping" to R.drawable.ic_shopping,
         "reading" to R.drawable.ic_task_icon,
         "sport" to R.drawable.ic_sport,
-        "Others" to R.drawable.ic_others
+        "others" to R.drawable.ic_others
     )
 
     fun assignIcon(context: Context, categoryName: String, imageView: ImageView) {

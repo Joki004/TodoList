@@ -7,7 +7,7 @@
     android:background="?attr/selectableItemBackground"
 
     tools:ignore="RtlSymmetry"
-    android:id="@+id/all_tasks">
+    android:id="@+id/Daily_task">
     <View
         android:id="@+id/line_above"
         android:layout_width="1dp"

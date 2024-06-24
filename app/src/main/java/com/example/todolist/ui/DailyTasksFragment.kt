@@ -45,7 +45,7 @@ class DailyTasksFragment : Fragment(R.layout.fragment_task_item_timeline) {
 
         val recyclerView: RecyclerView = rootView.findViewById(R.id.recycler_view)
         recyclerView.layoutManager = LinearLayoutManager(context)
-        taskAdapter = TaskAdapter(isDaily = false, onTaskClick = { taskId ->
+        taskAdapter = TaskAdapter(isDaily = true, onTaskClick = { taskId ->
             Log.d("Navigation", "Task ID: $taskId")
             val action = HomeFragmentDirections.actionHomeFragmentToEditTaskFragment(taskId.toString())
             Log.d("Navigation", "Action: $action")
