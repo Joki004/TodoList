@@ -81,10 +81,10 @@ class TaskViewModel(application: Application) : AndroidViewModel(application) {
     fun getTasksByCategoryForCurrentDay(categoryId: Int): LiveData<List<Task>> {
         return repository.getTasksByCategoryForCurrentDay(categoryId)
     }
-    fun insert(task: Task) {
-        viewModelScope.launch {
-            repository.insert(task)
-        }
+    suspend fun insert(task: Task) {
+        repository.insert(task)
+        val newTaskId = repository.getLastTaskId()  // Assuming this method gives the last inserted ID
+        Log.d("TaskCreation", "Task inserted with ID: $newTaskId")
     }
 
     fun insertCategory(categoryName: String) {
@@ -112,8 +112,14 @@ class TaskViewModel(application: Application) : AndroidViewModel(application) {
         repository.addAttachment(attachment)
     }
 
-    fun getAttachmentsForTask(taskId: Int): LiveData<List<Attachment>> {
+    fun getAttachmentsByTaskId(taskId: Int): LiveData<List<Attachment>> {
         return repository.getAttachmentsForTask(taskId)
+    }
+    suspend fun deleteAttachment(attachment: Attachment){
+        repository.deleteAttachment(attachment)
+    }
+    suspend fun deleteAttachmentByFilePath(filePath: String){
+        repository.deleteAttachmentByFilePath(filePath)
     }
 
     fun update(task: Task) {
@@ -135,44 +141,6 @@ class TaskViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    private fun insertSampleData() {
-        val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
-        val sampleTasks = listOf(
-            Task(
-                title = "Gym",
-                description = "Go to the gym. Don't skip leg day",
-                creationTime = System.currentTimeMillis(),
-                completionTime = dateFormat.parse("2024-06-13 21:00")!!,
-                isCompleted = false,
-                notificationEnabled = false,
-                categoryId = 1,
-                hasAttachments = false
-            ),
-            Task(
-                title = "Business meeting with Microsoft",
-                description = "This is a sample task description 2",
-                creationTime = System.currentTimeMillis(),
-                completionTime = dateFormat.parse("2024-06-012 15:00")!!,
-                isCompleted = true,
-                notificationEnabled = false,
-                categoryId = 2,
-                hasAttachments = true
-            ),
-            Task(
-                title = "Sample Task new",
-                description = "This is a sample task description new",
-                creationTime = System.currentTimeMillis(),
-                completionTime = dateFormat.parse("2024-06-11 05:00")!!,
-                isCompleted = true,
-                notificationEnabled = false,
-                categoryId = 3,
-                hasAttachments = false
-            )
-        )
-        sampleTasks.forEach { task ->
-            insert(task)
-        }
-    }
 
     private fun insertSampleDataInCategory() {
 

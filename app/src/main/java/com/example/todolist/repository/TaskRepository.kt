@@ -49,7 +49,7 @@ class TaskRepository(application: Application) {
         return taskDao.getTasksByCategoryForCurrentDay(categoryId)
     }
 
-    suspend fun insert(task: Task) {
+     suspend fun insert(task: Task) {
         taskDao.insert(task)
     }
     suspend fun insertCategory(category: Category){
@@ -71,6 +71,9 @@ class TaskRepository(application: Application) {
     suspend fun addAttachment(attachment: Attachment) {
         taskDao.insertAttachment(attachment)
     }
+    suspend fun deleteAttachment(attachment: Attachment){
+        taskDao.deleteAttachments(attachment)
+    }
 
     fun getAttachmentsForTask(taskId: Int): LiveData<List<Attachment>> {
         return taskDao.getAttachmentsForTask(taskId)
@@ -90,5 +93,8 @@ class TaskRepository(application: Application) {
         return taskDao.getTasksByID(taskId)
     }
 
+    suspend fun deleteAttachmentByFilePath(filePath: String) {
+        taskDao.deleteAttachmentByFilePath(filePath)
+    }
 
 }

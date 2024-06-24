@@ -1,8 +1,11 @@
 package com.example.todolist.helpers
 
 import android.annotation.SuppressLint
+import android.app.AlarmManager
 import android.app.AlertDialog
+import android.app.PendingIntent
 import android.content.Context
+import android.content.Intent
 import android.database.Cursor
 import android.net.Uri
 import android.provider.OpenableColumns
@@ -36,6 +39,8 @@ object Categories {
     var categoryIndex = 0
     var categoryList: MutableList<Category>? = null
 }
+
+
 
 
 fun observeTasksByCategory(
@@ -114,32 +119,39 @@ fun showCategoryDialog(
 }
 
 
-suspend fun handleFileSelection(uri: Uri, taskViewModel: TaskViewModel, context: Context, callback: (Boolean) -> Unit) {
-    withContext(Dispatchers.IO) {  // Ensure you are on the IO thread for file and database operations
-        try {
-            val fileName = getFileName(uri, context)
-            val fileType = context.contentResolver.getType(uri)
-            val taskId = withContext(Dispatchers.IO) {
-                taskViewModel.getLastTaskId()
-            }
+suspend fun handleFileSelections(taskId: Int,uris: List<Uri>, taskViewModel: TaskViewModel, context: Context, callback: (Boolean) -> Unit) {
+    try {
+        Log.d("FileSelection", "Handling files for taskId $taskId")
+        if (taskId != -1) {
+            uris.forEach { uri ->
+                val fileName = withContext(Dispatchers.IO) { getFileName(uri, context) }
+                val fileType = context.contentResolver.getType(uri)
 
-
-            if (taskId != -1) {
                 val attachment = Attachment(
                     taskId = taskId,
                     filePath = fileName,
                     fileType = fileType ?: "unknown"
                 )
 
-                taskViewModel.addAttachment(attachment)  // Update your database or LiveData here
-                callback(true)  // Successfully added the attachment
-            } else {
-                Log.e("FileSelection", "Failed to retrieve task ID for attachment")
-                callback(false)  // Failed to add the attachment due to task ID retrieval failure
+                withContext(Dispatchers.IO) {
+                    taskViewModel.addAttachment(attachment)
+                }
             }
-        } catch (e: Exception) {
-            Log.e("FileSelection", "Error handling file selection: ${e.message}")
-            callback(false)  // Failed to add the attachment due to an exception
+
+            withContext(Dispatchers.Main) {
+                callback(true)
+            }
+        }
+        else {
+            Log.e("FileSelection", "Failed to retrieve task ID for attachment")
+            withContext(Dispatchers.Main) {
+                callback(false)
+            }
+        }
+    } catch (e: Exception) {
+        Log.e("FileSelection", "Error handling file selection: ${e.message}")
+        withContext(Dispatchers.Main) {
+            callback(false)
         }
     }
 }
@@ -254,6 +266,24 @@ object IconHelper {
                 .into(imageView)
         }
     }
+
+
+}
+@SuppressLint("ScheduleExactAlarm")
+fun scheduleNotification(task: Task, context: Context) {
+    val sharedPreferences = context.getSharedPreferences("TaskSettings", Context.MODE_PRIVATE)
+    val notificationTimeBefore = sharedPreferences.getInt("notification_time", 10)  // default to 10 minutes
+
+    val notificationTime = task.completionTime.time - (notificationTimeBefore * 60 * 1000)
+
+
+    val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+    val intent = Intent(context, NotificationReceiver::class.java).apply {
+        putExtra("taskId", task.id)
+        putExtra("taskTitle", task.title)
+    }
+    val pendingIntent = PendingIntent.getBroadcast(context, task.id, intent, PendingIntent.FLAG_UPDATE_CURRENT)
+    alarmManager.setExact(AlarmManager.RTC_WAKEUP, notificationTime, pendingIntent)
 }
 
 

@@ -4,23 +4,45 @@ import android.annotation.SuppressLint
 import android.app.AlertDialog
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
+import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.*
+import android.widget.ArrayAdapter
+import android.widget.Button
+import android.widget.EditText
+import android.widget.Spinner
+import android.widget.Switch
+import android.widget.Toast
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.example.todolist.R
+import com.example.todolist.adapter.AttachmentAdapter
+import com.example.todolist.database.entities.Attachment
 import com.example.todolist.database.entities.Task
-import com.example.todolist.helpers.*
+import com.example.todolist.helpers.Categories
+import com.example.todolist.helpers.addNewCategory
+import com.example.todolist.helpers.formatDateTime
+import com.example.todolist.helpers.getDateTimeMillis
+import com.example.todolist.helpers.getFileName
+import com.example.todolist.helpers.handleFileSelections
+import com.example.todolist.helpers.observeTaskById
+import com.example.todolist.helpers.scheduleNotification
 import com.example.todolist.viewmodel.TaskViewModel
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
-import java.util.*
+import java.util.Calendar
+import java.util.Date
+import kotlin.coroutines.cancellation.CancellationException
 
 class EditTaskFragment : Fragment(R.layout.fragment_edit_task) {
 
@@ -32,23 +54,47 @@ class EditTaskFragment : Fragment(R.layout.fragment_edit_task) {
     private lateinit var time: EditText
     private lateinit var categorySpinner: Spinner
     private lateinit var saveButton: Button
+
+    @SuppressLint("UseSwitchCompatOrMaterialCode")
     private lateinit var hasNotification: Switch
+
+    @SuppressLint("UseSwitchCompatOrMaterialCode")
     private lateinit var isCompleted: Switch
     private var lenCategory: Int = 0
-
+    private var attachmentList: MutableList<Attachment> = mutableListOf()
+    private lateinit var attachmentsRecyclerView: RecyclerView
+    private lateinit var attachmentAdapter: AttachmentAdapter
+    private var selectedUris: MutableList<Uri> = mutableListOf()
+    private lateinit var pickFileLauncher: ActivityResultLauncher<Array<String>>
+    private var attachments: MutableList<Attachment> = mutableListOf()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Log.d("EditTaskFragment", "onCreate")
+        pickFileLauncher =
+            registerForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { uris: List<Uri>? ->
+                uris?.let {
+                    selectedUris.addAll(it)
+                    uris.forEach { uri ->
+                        val fileName = getFileName(uri, requireContext())
+                        val fileType = context?.contentResolver?.getType(uri)
+                        val attachmentSelected = Attachment(
+                            taskId = 0, filePath = fileName, fileType = fileType ?: "unknown"
+                        )
+                        attachments.add(attachmentSelected)
+                    }
+                    updateAttachmentList()
+                }
+            }
     }
 
     override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?
+        inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View? {
         Log.d("EditTaskFragment", "onCreateView")
         return inflater.inflate(R.layout.fragment_edit_task, container, false)
     }
 
+    @SuppressLint("NotifyDataSetChanged")
     @OptIn(DelicateCoroutinesApi::class)
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -67,7 +113,16 @@ class EditTaskFragment : Fragment(R.layout.fragment_edit_task) {
         // Handle arguments
         arguments?.getString("taskId")?.toIntOrNull()?.let { taskId ->
             observeTaskById(requireContext(), viewLifecycleOwner, taskViewModel, taskId) { task ->
+
+
                 displayTask(task)
+                // Observe attachments for the given task ID
+                taskViewModel.getAttachmentsByTaskId(taskId)
+                    .observe(viewLifecycleOwner) { attachments ->
+                        attachmentList.clear()
+                        attachmentList.addAll(attachments)
+                        attachmentAdapter.notifyDataSetChanged()
+                    }
             }
         } ?: Toast.makeText(context, "Invalid task ID", Toast.LENGTH_SHORT).show()
     }
@@ -81,12 +136,51 @@ class EditTaskFragment : Fragment(R.layout.fragment_edit_task) {
         hasNotification = view.findViewById(R.id.task_notification_toggle)
         isCompleted = view.findViewById(R.id.task_status_toggle)
         saveButton = view.findViewById(R.id.save_button)
+
+        attachmentsRecyclerView = view.findViewById<RecyclerView>(R.id.attachments_recycler_view)
+        attachmentsRecyclerView.layoutManager = LinearLayoutManager(requireContext())
+
+        attachmentAdapter = AttachmentAdapter(attachmentList) { attachment ->
+            showDeleteAttachmentConfirmation(attachment)
+        }
+        attachmentsRecyclerView.adapter = attachmentAdapter
+
+        view.findViewById<Button>(R.id.task_attachment_button).setOnClickListener {
+            pickFileLauncher.launch(arrayOf("*/*"))
+        }
     }
 
     private fun setListeners() {
         date.setOnClickListener { showDatePickerDialog() }
         time.setOnClickListener { showTimePickerDialog() }
         saveButton.setOnClickListener { handleSaveButtonClick() }
+    }
+
+    private fun showDeleteAttachmentConfirmation(attachment: Attachment) {
+        AlertDialog.Builder(requireContext()).setTitle("Delete Attachment")
+            .setMessage("Are you sure you want to delete this attachment?")
+            .setPositiveButton("Yes") { _, _ ->
+                deleteAttachment(attachment)
+            }.setNegativeButton("No", null).show()
+    }
+
+    private fun deleteAttachment(attachment: Attachment) {
+        val index = attachmentList.indexOf(attachment)
+        if (index != -1) {
+            attachmentList.removeAt(index)
+            attachmentAdapter.notifyItemRemoved(index)
+
+            val uriToRemove = selectedUris.firstOrNull { uri ->
+                getFileName(uri, requireContext()) == attachment.filePath
+            }
+            uriToRemove?.let { selectedUris.remove(it) }
+
+            attachments.remove(attachment)
+            viewLifecycleOwner.lifecycleScope.launch {
+                taskViewModel.deleteAttachmentByFilePath(attachment.filePath)
+            }
+
+        }
     }
 
     @OptIn(DelicateCoroutinesApi::class)
@@ -98,7 +192,7 @@ class EditTaskFragment : Fragment(R.layout.fragment_edit_task) {
             } else {
                 val categoryId = Categories.categoryList?.get(selectedPosition)?.id ?: -1
                 if (categoryId != -1) {
-                    if(updateTask(categoryId))showToast("Task ${taskMain?.title} updated successfully")
+                    if (updateTask(categoryId)) showToast("Task ${taskMain?.title} updated successfully")
                 } else {
                     showToast("Invalid category selection")
                 }
@@ -148,63 +242,94 @@ class EditTaskFragment : Fragment(R.layout.fragment_edit_task) {
         val categories = Categories.categoryList ?: listOf()
         lenCategory = categories.size
         val categoryNames = categories.map { it.name }.toMutableList().apply { add("New Category") }
-        val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_item, categoryNames)
+        val adapter =
+            ArrayAdapter(requireContext(), android.R.layout.simple_spinner_item, categoryNames)
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         categorySpinner.adapter = adapter
     }
 
     @OptIn(DelicateCoroutinesApi::class)
     private fun showNewCategoryDialog() {
-        val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_new_category, null)
+        val dialogView =
+            LayoutInflater.from(requireContext()).inflate(R.layout.dialog_new_category, null)
         val editText = dialogView.findViewById<EditText>(R.id.new_category_name)
 
-        val dialog = AlertDialog.Builder(requireContext())
-            .setTitle("New Category")
-            .setView(dialogView)
-            .setPositiveButton("Add") { _, _ ->
-                val newCategoryName = editText.text.toString()
-                if (newCategoryName.isNotEmpty()) {
-                    GlobalScope.launch(Dispatchers.Main) {
-                        addNewCategory(newCategoryName, taskViewModel) { categoryId ->
-                            if (categoryId != -1) {
-                                showToast("Category added successfully")
-                                populateCategorySpinner()
-                                categorySpinner.setSelection(Categories.categoryList?.indexOfFirst { it.id == categoryId } ?: 0)
-                            } else {
-                                showToast("Failed to add category")
+        val dialog =
+            AlertDialog.Builder(requireContext()).setTitle("New Category").setView(dialogView)
+                .setPositiveButton("Add") { _, _ ->
+                    val newCategoryName = editText.text.toString()
+                    if (newCategoryName.isNotEmpty()) {
+                        GlobalScope.launch(Dispatchers.Main) {
+                            addNewCategory(newCategoryName, taskViewModel) { categoryId ->
+                                if (categoryId != -1) {
+                                    showToast("Category added successfully")
+                                    populateCategorySpinner()
+                                    categorySpinner.setSelection(Categories.categoryList?.indexOfFirst { it.id == categoryId }
+                                        ?: 0)
+                                } else {
+                                    showToast("Failed to add category")
+                                }
                             }
                         }
+                    } else {
+                        showToast("Category name cannot be empty")
                     }
-                } else {
-                    showToast("Category name cannot be empty")
-                }
-            }
-            .setNegativeButton("Cancel", null)
-            .create()
+                }.setNegativeButton("Cancel", null).create()
 
         dialog.show()
     }
 
+    @OptIn(DelicateCoroutinesApi::class)
     private fun updateTask(categoryId: Int): Boolean {
         val taskDateTimeMillis = getDateTimeMillis(date, time)
-        taskDateTimeMillis?.let {
-            val taskDateTime = Date(it)
+        var taskId: Int? = null
+        taskDateTimeMillis?.let { millis ->
+            val taskDateTime = Date(millis)
+
             taskMain?.let { mainTask ->
-                val task = taskMain?.id?.let { it1 ->
-                    Task(
-                        id = it1,
-                        title = title.text.toString(),
-                        description = description.text.toString(),
-                        creationTime = mainTask.creationTime,
-                        completionTime = taskDateTime,
-                        isCompleted = isCompleted.isChecked,
-                        notificationEnabled = hasNotification.isChecked,
-                        categoryId = categoryId,
-                        hasAttachments = mainTask.hasAttachments
-                    )
+                val task = Task(
+                    id = mainTask.id,
+                    title = title.text.toString(),
+                    description = description.text.toString(),
+                    creationTime = mainTask.creationTime,
+                    completionTime = taskDateTime,
+                    isCompleted = isCompleted.isChecked,
+                    notificationEnabled = hasNotification.isChecked,
+                    categoryId = categoryId,
+                    hasAttachments = mainTask.hasAttachments
+                )
+                taskId = mainTask.id
+
+                taskViewModel.update(task)
+                if (task.notificationEnabled) {
+                    scheduleNotification(task, requireContext())
                 }
-                if (task != null) {
-                    taskViewModel.update(task)
+
+                viewLifecycleOwner.lifecycleScope.launch {
+                    try {
+                        Log.d("TaskUpdate", "Task updated with ID: $taskId")
+
+                        // Handle new attachments
+                        if (selectedUris.isNotEmpty()) {
+                            taskId?.let { id ->
+                                handleFileSelections(
+                                    id, selectedUris, taskViewModel, requireContext()
+                                ) { success ->
+                                    activity?.runOnUiThread {
+                                        Toast.makeText(
+                                            context,
+                                            if (success) "Attachments successfully added." else "Failed to add attachments.",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                    }
+                                }
+                            }
+                        }
+                    } catch (e: CancellationException) {
+                        Log.e("TaskUpdate", "Coroutine was cancelled", e)
+                    } catch (e: Exception) {
+                        Log.e("TaskUpdate", "Error updating task or managing attachments", e)
+                    }
                 }
                 return true
             } ?: showToast("Task data is missing")
@@ -214,5 +339,11 @@ class EditTaskFragment : Fragment(R.layout.fragment_edit_task) {
 
     private fun showToast(message: String) {
         Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+    }
+
+    @SuppressLint("NotifyDataSetChanged")
+    private fun updateAttachmentList() {
+        attachmentList.addAll(attachments)
+        attachmentAdapter.notifyDataSetChanged()
     }
 }

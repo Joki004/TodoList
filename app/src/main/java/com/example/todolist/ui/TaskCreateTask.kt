@@ -1,5 +1,6 @@
 package com.example.todolist.ui
 
+
 import android.annotation.SuppressLint
 import android.app.AlertDialog
 import android.app.DatePickerDialog
@@ -9,6 +10,7 @@ import android.graphics.Color
 import android.net.Uri
 import android.os.Bundle
 import android.text.InputType
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -23,19 +25,27 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.example.todolist.R
+import com.example.todolist.database.entities.Attachment
 import com.example.todolist.database.entities.Task
 import com.example.todolist.helpers.Categories
 import com.example.todolist.helpers.addNewCategory
-import com.example.todolist.helpers.getCategoryId
 import com.example.todolist.helpers.getDateTimeMillis
-import com.example.todolist.helpers.handleFileSelection
+import com.example.todolist.helpers.getFileName
+import com.example.todolist.helpers.handleFileSelections
+import com.example.todolist.helpers.scheduleNotification
 import com.example.todolist.viewmodel.TaskViewModel
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import java.util.Calendar
 import java.util.Date
+import kotlin.coroutines.cancellation.CancellationException
+import com.example.todolist.adapter.AttachmentAdapter
 
-
+@SuppressLint("UseSwitchCompatOrMaterialCode")
 class TaskCreateTask : DialogFragment() {
     private lateinit var taskViewModel: TaskViewModel
     private var title: EditText? = null
@@ -45,20 +55,34 @@ class TaskCreateTask : DialogFragment() {
     private var category: EditText? = null
     private var saveButton: Button? = null
     private var warningMessage: TextView? = null
-    private var attachement: ImageView? = null
+    private var attachment: ImageView? = null
     private var hasAttachment = false
-    private var UrlFile: Uri? = null
+    private var selectedUris: MutableList<Uri> = mutableListOf()
     private lateinit var pickFileLauncher: ActivityResultLauncher<Array<String>>
     private lateinit var taskNotificationToggle: Switch
+    private lateinit var attachmentsRecyclerView: RecyclerView
+    private lateinit var attachmentAdapter: AttachmentAdapter
+    private var attachmentList: MutableList<Attachment> = mutableListOf()
+    private var attachments: MutableList<Attachment> = mutableListOf()
+    @SuppressLint("NotifyDataSetChanged")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        pickFileLauncher =
-            registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
-                uri?.let {
-                    UrlFile = uri
-
+        pickFileLauncher = registerForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { uris: List<Uri>? ->
+            uris?.let {
+                selectedUris.addAll(it)
+                uris.forEach { uri ->
+                    val fileName = getFileName(uri, requireContext())
+                    val fileType = context?.contentResolver?.getType(uri)
+                    val attachmentSelected = Attachment(
+                        taskId = 0,
+                        filePath = fileName,
+                        fileType = fileType ?: "unknown"
+                    )
+                    attachments.add(attachmentSelected)
                 }
+                updateAttachmentList()
             }
+        }
     }
 
 
@@ -70,7 +94,7 @@ class TaskCreateTask : DialogFragment() {
         return inflater.inflate(R.layout.create_task, container, false)
     }
 
-    @SuppressLint("SetTextI18n")
+    @SuppressLint("SetTextI18n", "NotifyDataSetChanged")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         title = view.findViewById(R.id.task_title)
@@ -80,21 +104,36 @@ class TaskCreateTask : DialogFragment() {
         category = view.findViewById(R.id.editTextCategory)
         saveButton = view.findViewById(R.id.save_task_button)
         warningMessage = view.findViewById(R.id.warning_message)
-        attachement = view.findViewById(R.id.task_attachment)
+        attachment = view.findViewById(R.id.task_attachment)
         taskNotificationToggle = view.findViewById(R.id.task_notification_toggle)
-
+        attachmentsRecyclerView = view.findViewById(R.id.attachments_recycler_view)
         warningMessage?.visibility = View.INVISIBLE
+
+
+        attachmentAdapter = AttachmentAdapter(attachmentList) { attachment ->
+            // Handle deletion logic here
+            val index = attachmentList.indexOf(attachment)
+            if (index != -1) {
+                attachmentList.removeAt(index)
+                attachmentAdapter.notifyItemRemoved(index)
+            }
+        }
+
+        attachmentsRecyclerView.apply {
+            layoutManager = LinearLayoutManager(context)
+            adapter = attachmentAdapter
+        }
+
         saveButton?.setOnClickListener {
             if (checkNewTask(title!!, date!!, time!!, category!!)) {
                 category?.text?.toString()?.let { categoryName ->
                     lifecycleScope.launch {
-                        addNewCategory(categoryName, taskViewModel){ categoryId->
-                            if(categoryId!=-1){
-                                if(processTask(categoryId)){
+                        addNewCategory(categoryName, taskViewModel) { categoryId ->
+                            if (categoryId != -1) {
+                                if (processTask(categoryId)) {
                                     dismiss()
                                 }
-                            }
-                            else {
+                            } else {
                                 Toast.makeText(
                                     context,
                                     "Failed to add category",
@@ -119,8 +158,8 @@ class TaskCreateTask : DialogFragment() {
         }
 
 
-        attachement?.setOnClickListener {
-            
+        attachment?.setOnClickListener {
+
             pickFileLauncher.launch(arrayOf("*/*"))
         }
 
@@ -273,9 +312,10 @@ class TaskCreateTask : DialogFragment() {
         addDialog.show()
     }
 
-    private fun processTask(categoryId: Int):Boolean {
+    @OptIn(DelicateCoroutinesApi::class)
+    private fun processTask(categoryId: Int): Boolean {
         val taskDateTimeMillis = getDateTimeMillis(date!!, time!!)
-        if(UrlFile!=null)hasAttachment=true
+        if (selectedUris.isNotEmpty()) hasAttachment = true
         taskDateTimeMillis?.let {
             val taskDateTime = Date(it)
             val task = Task(
@@ -288,34 +328,64 @@ class TaskCreateTask : DialogFragment() {
                 categoryId = categoryId,
                 hasAttachments = hasAttachment
             )
-            taskViewModel.insert(task)
-            if (hasAttachment && UrlFile != null) {
-                lifecycleScope.launch {
-                    handleFileSelection(UrlFile!!, taskViewModel, requireContext()) { success ->
-                        if (success) {
-                            // If the attachment was successfully added
-                            activity?.runOnUiThread {
-                                Toast.makeText(context, "Attachment successfully added.", Toast.LENGTH_SHORT).show()
-                            }
-                        } else {
-                            // If there was an error adding the attachment
-                            activity?.runOnUiThread {
-                                Toast.makeText(context, "Failed to add attachment.", Toast.LENGTH_SHORT).show()
+            lifecycleScope.launch {
+                taskViewModel.insert(task)
+            }
+
+            if (task.notificationEnabled) {
+                scheduleNotification(task, requireContext())
+            }
+
+            GlobalScope.launch {
+
+                try {
+                    val newTaskId = taskViewModel.getLastTaskId()
+                    Log.d("TaskCreation", "New Task inserted with ID: $newTaskId")
+                    if (hasAttachment && selectedUris.isNotEmpty()) {
+                        handleFileSelections(
+                            newTaskId,
+                            selectedUris,
+                            taskViewModel,
+                            requireContext()
+                        ) { success ->
+                            if (success) {
+                                activity?.runOnUiThread {
+                                    Toast.makeText(
+                                        context,
+                                        "Attachments successfully added.",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                }
+                            } else {
+                                activity?.runOnUiThread {
+                                    Toast.makeText(
+                                        context,
+                                        "Failed to add attachments.",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                }
                             }
                         }
                     }
+                } catch (e: CancellationException) {
+                    Log.e("TaskCreation", "Coroutine was cancelled", e)
+                } catch (e: Exception) {
+                    Log.e("TaskCreation", "Error fetching task ID", e)
                 }
-            }
 
+
+            }
             return true
         } ?: run {
             Toast.makeText(context, "Invalid date or time", Toast.LENGTH_SHORT).show()
             return false
         }
     }
-
-
-
-
+    @SuppressLint("NotifyDataSetChanged")
+    private fun updateAttachmentList() {
+        attachmentList.clear()
+        attachmentList.addAll(attachments)
+        attachmentAdapter.notifyDataSetChanged()
+    }
 
 }

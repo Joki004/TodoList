@@ -13,6 +13,7 @@
         android:layout_width="0dp"
         android:layout_height="50dp"
         android:layout_margin="10dp"
+        android:padding="10dp"
         android:autoSizeTextType="uniform"
         android:background="@drawable/rounded_corners"
         android:hint="Title"
@@ -24,11 +25,12 @@
     <EditText
         android:id="@+id/task_description"
         android:layout_width="0dp"
-        android:layout_height="120dp"
+        android:layout_height="100dp"
         android:layout_margin="10dp"
         android:autoSizeTextType="uniform"
         android:background="@drawable/rounded_corners"
         android:hint="Description"
+        android:padding="10dp"
         android:maxHeight="120dp"
         app:layout_constraintBottom_toTopOf="@+id/editTextCategory"
         app:layout_constraintEnd_toEndOf="parent"
@@ -43,6 +45,7 @@
         android:autoSizeTextType="uniform"
         android:background="@drawable/rounded_corners"
         android:clickable="true"
+
         android:cursorVisible="false"
         android:focusable="false"
         android:focusableInTouchMode="false"
@@ -61,6 +64,7 @@
         android:autoSizeTextType="uniform"
         android:background="@drawable/rounded_corners"
         android:clickable="true"
+        android:padding="10dp"
         android:cursorVisible="false"
         android:focusable="false"
         android:focusableInTouchMode="false"
@@ -80,6 +84,7 @@
         android:autoSizeTextType="uniform"
         android:background="@drawable/rounded_corners"
         android:clickable="true"
+        android:padding="10dp"
         android:cursorVisible="false"
         android:focusable="false"
         android:focusableInTouchMode="false"
@@ -97,10 +102,11 @@
         android:layout_width="50dp"
         android:layout_height="50dp"
         android:layout_margin="10dp"
+        android:padding="10dp"
         android:background="@drawable/rounded_corners"
         android:contentDescription="@string/attachement_icon"
         android:src="@drawable/ic_attachment"
-        app:layout_constraintBottom_toTopOf="@id/save_task_button"
+        app:layout_constraintBottom_toTopOf="@id/guideline11"
         app:layout_constraintEnd_toStartOf="@id/task_notification_toggle"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/editTextTime" />
@@ -111,11 +117,23 @@
         android:layout_height="wrap_content"
         android:paddingTop="8dp"
         android:text="Enable Notification"
-        app:layout_constraintBottom_toTopOf="@id/save_task_button"
+        android:padding="10dp"
+        app:layout_constraintBottom_toTopOf="@id/guideline11"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@id/task_attachment"
         app:layout_constraintTop_toBottomOf="@id/editTextDate"
         tools:ignore="UseSwitchCompatOrMaterialXml" />
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/attachments_recycler_view"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginTop="10dp"
+        android:background="@drawable/rounded_corners_gray"
+        app:layout_constraintBottom_toTopOf="@id/guideline12"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/guideline11" />
+
 
     <Button
         android:id="@+id/save_task_button"
@@ -124,11 +142,12 @@
         android:background="@color/secondaryColor"
 
         android:text="Save Task"
+        android:autoSizeTextType="uniform"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
 
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/task_attachment" />
+        app:layout_constraintTop_toBottomOf="@+id/guideline12" />
 
     <TextView
         android:id="@+id/warning_message"
@@ -136,8 +155,30 @@
         android:layout_height="50dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-
+        android:gravity="center"
+        app:flow_verticalGap="5dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/save_task_button" />
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/guideline11"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_percent="0.60" />
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/guideline12"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_percent="0.80" />
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/guideline13"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_percent="0.9" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

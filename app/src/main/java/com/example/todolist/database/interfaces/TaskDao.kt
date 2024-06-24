@@ -73,7 +73,8 @@ interface TaskDao {
 
     @Query("SELECT * FROM attachment_table WHERE taskId = :taskId")
     fun getAttachmentsForTask(taskId: Int): LiveData<List<Attachment>>
-
+    @Delete
+    suspend fun deleteAttachments(attachment: Attachment)
     @Insert
     suspend fun insertCategory(category: Category)
 
@@ -95,4 +96,7 @@ interface TaskDao {
 
     @Query("SELECT COUNT(*) FROM task_table WHERE isCompleted = 1")
     fun getCompletedTaskCount(): LiveData<Int>
+    @Query("DELETE FROM attachment_table WHERE filePath = :filePath")
+    suspend fun deleteAttachmentByFilePath(filePath: String)
+
 }
