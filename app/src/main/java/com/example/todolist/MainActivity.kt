@@ -17,20 +17,14 @@ import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.NavigationUI
 import androidx.navigation.ui.setupWithNavController
-import com.example.todolist.adapter.AttachmentAdapter.Companion.attachmentGlobal
-
 import com.example.todolist.filepicker.PickFile
-import com.example.todolist.helpers.getUriFromDatabase
-import com.example.todolist.helpers.openFileFromUri
-import com.example.todolist.permissions.AskPermissions
 import com.example.todolist.viewmodel.TaskViewModel
 import com.google.android.material.navigation.NavigationView
 
 class MainActivity : AppCompatActivity() {
-    private lateinit var askPermissions: AskPermissions
+
     private lateinit var pickFile: PickFile
     private lateinit var appBarConfiguration: AppBarConfiguration
-    private val taskViewModel: TaskViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -59,7 +53,7 @@ class MainActivity : AppCompatActivity() {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         val filePaths = pickFile.handleActivityResult(requestCode, resultCode, data)
-        // Save the file paths or handle them as needed
+
     }
 
     companion object {
@@ -72,22 +66,5 @@ class MainActivity : AppCompatActivity() {
             navController,
             appBarConfiguration
         ) || super.onSupportNavigateUp()
-    }
-
-    override fun onRequestPermissionsResult(
-        requestCode: Int, permissions: Array<out String>, grantResults: IntArray
-    ) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == READ_EXTERNAL_STORAGE_PERMISSION_CODE) {
-            if ((grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
-                val uri =
-                    attachmentGlobal?.let { getUriFromDatabase(it) }
-                if (uri != null) {
-                    attachmentGlobal?.let { openFileFromUri(this, it) }
-                }
-            } else {
-                Toast.makeText(this, "Permission denied to read your External storage", Toast.LENGTH_SHORT).show()
-            }
-        }
     }
 }

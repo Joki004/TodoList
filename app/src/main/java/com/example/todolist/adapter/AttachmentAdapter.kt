@@ -35,12 +35,7 @@ class AttachmentAdapter(
     private val onAttachmentClick: (Attachment) -> Unit,
 ) :
     RecyclerView.Adapter<AttachmentAdapter.AttachmentViewHolder>() {
-    companion object {
-        const val READ_EXTERNAL_STORAGE_PERMISSION_CODE = 98
-        var attachmentGlobal: Attachment? = null
-    }
 
-    // ViewHolder inner class
     inner class AttachmentViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         private val attachmentName: TextView = itemView.findViewById(R.id.attachment_name)
         private val deleteIcon: ImageView = itemView.findViewById(R.id.ic_delete)
@@ -52,8 +47,7 @@ class AttachmentAdapter(
             }
 
             itemView.setOnClickListener {
-                attachmentGlobal = attachment
-                onAttachmentClick(attachment) // Pass attachment here
+                onAttachmentClick(attachment)
             }
         }
     }

@@ -8,6 +8,7 @@ import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -28,7 +29,6 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.example.todolist.MainActivity
 import com.example.todolist.R
 import com.example.todolist.adapter.AttachmentAdapter
 import com.example.todolist.database.entities.Attachment
@@ -40,13 +40,15 @@ import com.example.todolist.helpers.getDateTimeMillis
 import com.example.todolist.helpers.getFileName
 import com.example.todolist.helpers.handleFileSelections
 import com.example.todolist.helpers.observeTaskById
-import com.example.todolist.helpers.openFileFromUri
 import com.example.todolist.helpers.scheduleNotification
 import com.example.todolist.viewmodel.TaskViewModel
+import hasReadMediaPermissions
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import requestReadMediaPermissions
+import takePersistableUriPermission
 import java.util.Calendar
 import java.util.Date
 import kotlin.coroutines.cancellation.CancellationException
@@ -62,7 +64,6 @@ class EditTaskFragment : Fragment(R.layout.fragment_edit_task) {
     private lateinit var categorySpinner: Spinner
     private lateinit var saveButton: Button
 
-
     @SuppressLint("UseSwitchCompatOrMaterialCode")
     private lateinit var hasNotification: Switch
 
@@ -75,6 +76,12 @@ class EditTaskFragment : Fragment(R.layout.fragment_edit_task) {
     private var selectedUris: MutableList<Uri> = mutableListOf()
     private lateinit var pickFileLauncher: ActivityResultLauncher<Array<String>>
     private var attachments: MutableList<Attachment> = mutableListOf()
+
+    companion object {
+
+        const val READ_MEDIA_PERMISSIONS_REQUEST_CODE = 1002
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Log.d("EditTaskFragment", "onCreate")
@@ -85,7 +92,6 @@ class EditTaskFragment : Fragment(R.layout.fragment_edit_task) {
                     uris.forEach { uri ->
                         val fileName = getFileName(uri, requireContext())
                         val fileType = context?.contentResolver?.getType(uri)
-                        val fullPath = uri.path ?: ""
                         val attachmentSelected = Attachment(
                             taskId = 0,
                             filePath = fileName,
@@ -94,6 +100,7 @@ class EditTaskFragment : Fragment(R.layout.fragment_edit_task) {
                             contentProviderAuthority = uri.authority.toString()
                         )
                         attachments.add(attachmentSelected)
+                        takePersistableUriPermission(uri, requireContext())
                     }
                     updateAttachmentList()
                 }
@@ -154,7 +161,11 @@ class EditTaskFragment : Fragment(R.layout.fragment_edit_task) {
         attachmentsRecyclerView.layoutManager = LinearLayoutManager(requireContext())
 
         attachmentAdapter =
-            AttachmentAdapter(attachmentList, ::showDeleteAttachmentConfirmation,::handleOpenAttachment )
+            AttachmentAdapter(
+                attachmentList,
+                ::showDeleteAttachmentConfirmation,
+                ::handleOpenAttachment
+            )
         attachmentsRecyclerView.adapter = attachmentAdapter
 
         view.findViewById<Button>(R.id.task_attachment_button).setOnClickListener {
@@ -163,49 +174,70 @@ class EditTaskFragment : Fragment(R.layout.fragment_edit_task) {
     }
 
     private fun handleOpenAttachment(attachment: Attachment) {
-        if (ContextCompat.checkSelfPermission(requireContext(), android.Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-            // Request permissions if not granted
-            ActivityCompat.requestPermissions(requireActivity(), arrayOf(android.Manifest.permission.READ_EXTERNAL_STORAGE), MainActivity.READ_EXTERNAL_STORAGE_PERMISSION_CODE)
+        if (!hasReadMediaPermissions(requireContext())) {
+            requestReadMediaPermissions(requireActivity())
         } else {
-            // Open the file if permission is granted
             openFile(attachment)
         }
     }
 
-    @SuppressLint("IntentReset")
-    private fun openFile(attachment: Attachment) {
+    @Deprecated("Deprecated in Java")
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == READ_MEDIA_PERMISSIONS_REQUEST_CODE && grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            selectedUris.lastOrNull()?.let { uri ->
+                attachmentList.firstOrNull { it.uri == uri }?.let { openFile(it) }
+            }
+        } else {
+            if (!ActivityCompat.shouldShowRequestPermissionRationale(
+                    requireActivity(),
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) android.Manifest.permission.READ_MEDIA_IMAGES else android.Manifest.permission.READ_EXTERNAL_STORAGE
+                )
+            ) {
+                showPermissionDeniedDialog()
+            } else {
+                Log.d("OpenAFile", "Permission denied to access external Storage")
+            }
+        }
+    }
 
-        Log.d("OpenFile", "Attempting to open file: ${attachment.uri} with type ${attachment.fileType}")
-        val context = requireContext()
-        val fileType = context.contentResolver.getType(attachment.uri)
-        Log.d("OpenFile", "File MIME type: $fileType")
+    private fun openFile(attachment: Attachment) {
         val intent = Intent(Intent.ACTION_VIEW).apply {
-            data = attachment.uri
-            type = attachment.fileType
+            setDataAndType(attachment.uri, attachment.fileType)
             flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK
         }
         try {
             startActivity(intent)
         } catch (e: ActivityNotFoundException) {
-            Toast.makeText(context, "No application found to open this file type.", Toast.LENGTH_SHORT).show()
-        }
-    }
-
-    @Deprecated("Deprecated in Java")
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == MainActivity.READ_EXTERNAL_STORAGE_PERMISSION_CODE) {
-            if ((grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
-                // Check if the global attachment variable is not null and then open it
-                AttachmentAdapter.attachmentGlobal?.let { openFile(it) }
+            Log.d("OpenAFile", "No application found to open this file type.")
+        } catch (e: SecurityException) {
+            Log.d("OpenAFile", "Permission denied to access the file.")
+            if (!hasReadMediaPermissions(requireContext())) {
+                requestReadMediaPermissions(requireActivity())
             } else {
-                Toast.makeText(context, "Permission denied to read external storage", Toast.LENGTH_SHORT).show()
+                takePersistableUriPermission(attachment.uri, requireContext())
             }
         }
     }
 
-
-
+    private fun showPermissionDeniedDialog() {
+        AlertDialog.Builder(requireContext())
+            .setTitle("Permission Required")
+            .setMessage("This app needs permission to read external storage. Please enable it in the app settings.")
+            .setPositiveButton("Go to Settings") { _, _ ->
+                val intent =
+                    Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                        data = Uri.fromParts("package", requireContext().packageName, null)
+                    }
+                startActivity(intent)
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
 
     private fun setListeners() {
         date.setOnClickListener { showDatePickerDialog() }
@@ -292,7 +324,7 @@ class EditTaskFragment : Fragment(R.layout.fragment_edit_task) {
         val minute = calendar.get(Calendar.MINUTE)
         TimePickerDialog(requireContext(), { _, selectedHour, selectedMinute ->
             time.setText(String.format("%02d:%02d", selectedHour, selectedMinute))
-        }, hour, minute, true).show()  // 'true' for 24-hour clock
+        }, hour, minute, true).show()
     }
 
     private fun populateCategorySpinner() {

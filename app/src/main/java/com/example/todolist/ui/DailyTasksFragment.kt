@@ -58,7 +58,7 @@ class DailyTasksFragment : Fragment(R.layout.fragment_task_item_timeline) {
 
         recyclerView.adapter = taskAdapter
 
-        taskViewModel = ViewModelProvider(this).get(TaskViewModel::class.java)
+        taskViewModel = ViewModelProvider(this)[TaskViewModel::class.java]
         categoryAdapter = CategoryAdapter(isDaily = true, onCategoryLongClick = { category ->
             showDeleteCategoryConfirmationDialog(category, requireContext(), taskViewModel)
         })

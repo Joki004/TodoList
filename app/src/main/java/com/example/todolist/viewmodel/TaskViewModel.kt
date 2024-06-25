@@ -82,7 +82,9 @@ class TaskViewModel(application: Application) : AndroidViewModel(application) {
         return repository.getTasksByCategoryForCurrentDay(categoryId)
     }
     suspend fun insert(task: Task) {
-        repository.insert(task)
+        viewModelScope.launch {
+            repository.insert(task)
+        }
         val newTaskId = repository.getLastTaskId()  // Assuming this method gives the last inserted ID
         Log.d("TaskCreation", "Task inserted with ID: $newTaskId")
     }
