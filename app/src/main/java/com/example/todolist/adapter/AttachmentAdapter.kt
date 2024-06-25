@@ -1,16 +1,44 @@
 package com.example.todolist.adapter
 
+import android.app.Activity
+import android.content.Context
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.net.Uri
+import android.os.Environment
+import android.provider.MediaStore
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
+import android.widget.Toast
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
+import androidx.core.content.ContextCompat.startActivity
+import androidx.core.content.FileProvider
 import androidx.recyclerview.widget.RecyclerView
+import com.example.todolist.MainActivity
 import com.example.todolist.R
 import com.example.todolist.database.entities.Attachment
+import java.io.File
+import java.io.FileNotFoundException
+import java.io.IOException
+import java.util.jar.Manifest
+import android.content.ActivityNotFoundException as ActivityNotFoundException1
 
-class AttachmentAdapter(private val attachments: MutableList<Attachment>, private val onDeleteClick: (Attachment) -> Unit) :
+
+class AttachmentAdapter(
+    private val attachments: MutableList<Attachment>,
+    private val onDeleteClick: (Attachment) -> Unit,
+    private val onAttachmentClick: (Attachment) -> Unit,
+) :
     RecyclerView.Adapter<AttachmentAdapter.AttachmentViewHolder>() {
+    companion object {
+        const val READ_EXTERNAL_STORAGE_PERMISSION_CODE = 98
+        var attachmentGlobal: Attachment? = null
+    }
 
     // ViewHolder inner class
     inner class AttachmentViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
@@ -21,6 +49,11 @@ class AttachmentAdapter(private val attachments: MutableList<Attachment>, privat
             attachmentName.text = attachment.filePath
             deleteIcon.setOnClickListener {
                 onDeleteClick(attachment)
+            }
+
+            itemView.setOnClickListener {
+                attachmentGlobal = attachment
+                onAttachmentClick(attachment) // Pass attachment here
             }
         }
     }
@@ -38,4 +71,6 @@ class AttachmentAdapter(private val attachments: MutableList<Attachment>, privat
     override fun getItemCount(): Int {
         return attachments.size
     }
+
+
 }

@@ -76,8 +76,11 @@ class TaskCreateTask : DialogFragment() {
                     val attachmentSelected = Attachment(
                         taskId = 0,
                         filePath = fileName,
-                        fileType = fileType ?: "unknown"
+                        fileType = fileType ?: "unknown",
+                        uri = uri,
+                        contentProviderAuthority = uri.authority.toString()
                     )
+                    Log.d("OpenFIle", "URI: $uri, File Type: $fileType, File Name: $fileName")
                     attachments.add(attachmentSelected)
                 }
                 updateAttachmentList()
@@ -110,14 +113,7 @@ class TaskCreateTask : DialogFragment() {
         warningMessage?.visibility = View.INVISIBLE
 
 
-        attachmentAdapter = AttachmentAdapter(attachmentList) { attachment ->
-            // Handle deletion logic here
-            val index = attachmentList.indexOf(attachment)
-            if (index != -1) {
-                attachmentList.removeAt(index)
-                attachmentAdapter.notifyItemRemoved(index)
-            }
-        }
+        attachmentAdapter = AttachmentAdapter(attachmentList, ::onDeleteClick,::onAttachmentClick)
 
         attachmentsRecyclerView.apply {
             layoutManager = LinearLayoutManager(context)
@@ -186,6 +182,17 @@ class TaskCreateTask : DialogFragment() {
 
     }
 
+    private fun onDeleteClick(attachment: Attachment) {
+        val index = attachmentList.indexOf(attachment)
+        if (index != -1) {
+            attachmentList.removeAt(index)
+            attachmentAdapter.notifyItemRemoved(index)
+        }
+    }
+
+    private fun onAttachmentClick(attachment: Attachment) {
+        // Handle click on attachment if needed
+    }
 
     fun checkNewTask(title: EditText, date: EditText, time: EditText, category: EditText): Boolean {
         // Check if any field is empty, return false immediately

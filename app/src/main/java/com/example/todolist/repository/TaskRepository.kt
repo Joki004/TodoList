@@ -93,8 +93,12 @@ class TaskRepository(application: Application) {
         return taskDao.getTasksByID(taskId)
     }
 
-    suspend fun deleteAttachmentByFilePath(filePath: String) {
-        taskDao.deleteAttachmentByFilePath(filePath)
+    suspend fun deleteAttachmentByFilePath(filePath: String, taskId: Int) {
+        taskDao.deleteAttachmentByFilePath(filePath, taskId)
+    }
+
+    fun searchTasks(searchTerm: String): LiveData<List<Task>> {
+        return taskDao.searchTasks(searchTerm)
     }
 
 }

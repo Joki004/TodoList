@@ -4,6 +4,9 @@ import android.annotation.SuppressLint
 import android.app.AlertDialog
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
+import android.content.ActivityNotFoundException
+import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
@@ -18,11 +21,14 @@ import android.widget.Switch
 import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.example.todolist.MainActivity
 import com.example.todolist.R
 import com.example.todolist.adapter.AttachmentAdapter
 import com.example.todolist.database.entities.Attachment
@@ -34,6 +40,7 @@ import com.example.todolist.helpers.getDateTimeMillis
 import com.example.todolist.helpers.getFileName
 import com.example.todolist.helpers.handleFileSelections
 import com.example.todolist.helpers.observeTaskById
+import com.example.todolist.helpers.openFileFromUri
 import com.example.todolist.helpers.scheduleNotification
 import com.example.todolist.viewmodel.TaskViewModel
 import kotlinx.coroutines.DelicateCoroutinesApi
@@ -54,6 +61,7 @@ class EditTaskFragment : Fragment(R.layout.fragment_edit_task) {
     private lateinit var time: EditText
     private lateinit var categorySpinner: Spinner
     private lateinit var saveButton: Button
+
 
     @SuppressLint("UseSwitchCompatOrMaterialCode")
     private lateinit var hasNotification: Switch
@@ -77,8 +85,13 @@ class EditTaskFragment : Fragment(R.layout.fragment_edit_task) {
                     uris.forEach { uri ->
                         val fileName = getFileName(uri, requireContext())
                         val fileType = context?.contentResolver?.getType(uri)
+                        val fullPath = uri.path ?: ""
                         val attachmentSelected = Attachment(
-                            taskId = 0, filePath = fileName, fileType = fileType ?: "unknown"
+                            taskId = 0,
+                            filePath = fileName,
+                            fileType = fileType ?: "unknown",
+                            uri = uri,
+                            contentProviderAuthority = uri.authority.toString()
                         )
                         attachments.add(attachmentSelected)
                     }
@@ -137,18 +150,62 @@ class EditTaskFragment : Fragment(R.layout.fragment_edit_task) {
         isCompleted = view.findViewById(R.id.task_status_toggle)
         saveButton = view.findViewById(R.id.save_button)
 
-        attachmentsRecyclerView = view.findViewById<RecyclerView>(R.id.attachments_recycler_view)
+        attachmentsRecyclerView = view.findViewById(R.id.attachments_recycler_view)
         attachmentsRecyclerView.layoutManager = LinearLayoutManager(requireContext())
 
-        attachmentAdapter = AttachmentAdapter(attachmentList) { attachment ->
-            showDeleteAttachmentConfirmation(attachment)
-        }
+        attachmentAdapter =
+            AttachmentAdapter(attachmentList, ::showDeleteAttachmentConfirmation,::handleOpenAttachment )
         attachmentsRecyclerView.adapter = attachmentAdapter
 
         view.findViewById<Button>(R.id.task_attachment_button).setOnClickListener {
             pickFileLauncher.launch(arrayOf("*/*"))
         }
     }
+
+    private fun handleOpenAttachment(attachment: Attachment) {
+        if (ContextCompat.checkSelfPermission(requireContext(), android.Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            // Request permissions if not granted
+            ActivityCompat.requestPermissions(requireActivity(), arrayOf(android.Manifest.permission.READ_EXTERNAL_STORAGE), MainActivity.READ_EXTERNAL_STORAGE_PERMISSION_CODE)
+        } else {
+            // Open the file if permission is granted
+            openFile(attachment)
+        }
+    }
+
+    @SuppressLint("IntentReset")
+    private fun openFile(attachment: Attachment) {
+
+        Log.d("OpenFile", "Attempting to open file: ${attachment.uri} with type ${attachment.fileType}")
+        val context = requireContext()
+        val fileType = context.contentResolver.getType(attachment.uri)
+        Log.d("OpenFile", "File MIME type: $fileType")
+        val intent = Intent(Intent.ACTION_VIEW).apply {
+            data = attachment.uri
+            type = attachment.fileType
+            flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK
+        }
+        try {
+            startActivity(intent)
+        } catch (e: ActivityNotFoundException) {
+            Toast.makeText(context, "No application found to open this file type.", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    @Deprecated("Deprecated in Java")
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == MainActivity.READ_EXTERNAL_STORAGE_PERMISSION_CODE) {
+            if ((grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
+                // Check if the global attachment variable is not null and then open it
+                AttachmentAdapter.attachmentGlobal?.let { openFile(it) }
+            } else {
+                Toast.makeText(context, "Permission denied to read external storage", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+
+
 
     private fun setListeners() {
         date.setOnClickListener { showDatePickerDialog() }
@@ -177,7 +234,7 @@ class EditTaskFragment : Fragment(R.layout.fragment_edit_task) {
 
             attachments.remove(attachment)
             viewLifecycleOwner.lifecycleScope.launch {
-                taskViewModel.deleteAttachmentByFilePath(attachment.filePath)
+                taskViewModel.deleteAttachmentByFilePath(attachment.filePath, attachment.taskId)
             }
 
         }

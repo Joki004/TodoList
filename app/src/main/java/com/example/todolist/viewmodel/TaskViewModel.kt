@@ -118,8 +118,8 @@ class TaskViewModel(application: Application) : AndroidViewModel(application) {
     suspend fun deleteAttachment(attachment: Attachment){
         repository.deleteAttachment(attachment)
     }
-    suspend fun deleteAttachmentByFilePath(filePath: String){
-        repository.deleteAttachmentByFilePath(filePath)
+    suspend fun deleteAttachmentByFilePath(filePath: String, taskId: Int){
+        repository.deleteAttachmentByFilePath(filePath,taskId)
     }
 
     fun update(task: Task) {
@@ -185,5 +185,9 @@ class TaskViewModel(application: Application) : AndroidViewModel(application) {
                 Log.d("ViewModel", "Task not found")
             }
         }
+    }
+
+    fun searchTasks(searchTerm: String): LiveData<List<Task>> {
+        return repository.searchTasks(searchTerm)
     }
 }

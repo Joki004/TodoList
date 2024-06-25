@@ -1,6 +1,7 @@
 package com.example.todolist.helpers
 
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.app.AlarmManager
 import android.app.AlertDialog
 import android.app.PendingIntent
@@ -10,13 +11,16 @@ import android.database.Cursor
 import android.net.Uri
 import android.provider.OpenableColumns
 import android.util.Log
+import android.webkit.MimeTypeMap
 import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageView
 import android.widget.Toast
+import androidx.core.app.ActivityCompat
 import androidx.lifecycle.LifecycleOwner
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.Observer
+import com.bumptech.glide.Glide
+import com.bumptech.glide.request.RequestOptions
+import com.example.todolist.MainActivity
 import com.example.todolist.R
 import com.example.todolist.adapter.TaskAdapter
 import com.example.todolist.database.entities.Attachment
@@ -25,22 +29,21 @@ import com.example.todolist.database.entities.Task
 import com.example.todolist.viewmodel.TaskViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.io.File
+import java.io.FileOutputStream
+import java.io.IOException
+import java.io.InputStream
+import java.io.OutputStream
 import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-import android.graphics.drawable.Drawable
-import androidx.core.content.ContextCompat
-import com.bumptech.glide.Glide
-import com.bumptech.glide.request.RequestOptions
 
 
 object Categories {
     var categoryIndex = 0
     var categoryList: MutableList<Category>? = null
 }
-
-
 
 
 fun observeTasksByCategory(
@@ -52,24 +55,24 @@ fun observeTasksByCategory(
 ) {
     if (isDaily) {
         if (categoryId == null) {
-            taskViewModel.tasksForCurrentDay.observe(lifecycleOwner, Observer { tasks ->
+            taskViewModel.tasksForCurrentDay.observe(lifecycleOwner) { tasks ->
                 taskAdapter.submitList(tasks)
-            })
+            }
         } else {
             taskViewModel.getTasksByCategoryForCurrentDay(categoryId)
-                .observe(lifecycleOwner, Observer { tasks ->
+                .observe(lifecycleOwner) { tasks ->
                     taskAdapter.submitList(tasks)
-                })
+                }
         }
     } else {
         if (categoryId == null) {
-            taskViewModel.tasksByCompletionTimeDESC.observe(lifecycleOwner, Observer { tasks ->
+            taskViewModel.tasksByCompletionTimeDESC.observe(lifecycleOwner) { tasks ->
                 taskAdapter.submitList(tasks)
-            })
+            }
         } else {
-            taskViewModel.getTasksByCategory(categoryId).observe(lifecycleOwner, Observer { tasks ->
+            taskViewModel.getTasksByCategory(categoryId).observe(lifecycleOwner) { tasks ->
                 taskAdapter.submitList(tasks)
-            })
+            }
         }
     }
 
@@ -88,18 +91,13 @@ fun showCategoryDialog(
     val categoryNames = arrayOf("All categories") + categories.map { it.name }
     val currentSelection = Categories.categoryIndex
 
-    val dialog = AlertDialog.Builder(context)
-        .setTitle("Select Category")
+    val dialog = AlertDialog.Builder(context).setTitle("Select Category")
         .setSingleChoiceItems(categoryNames, currentSelection) { dialog, which ->
             Categories.categoryIndex = which
             button.text = categoryNames[which]
             if (which == 0) {
                 observeTasksByCategory(
-                    viewLifecycleOwner,
-                    taskViewModel,
-                    taskAdapter,
-                    null,
-                    isDaily
+                    viewLifecycleOwner, taskViewModel, taskAdapter, null, isDaily
                 )
 
             } else {
@@ -112,25 +110,31 @@ fun showCategoryDialog(
                 )
             }
             dialog.dismiss()
-        }
-        .create()
+        }.create()
 
     dialog.show()
 }
 
 
-suspend fun handleFileSelections(taskId: Int,uris: List<Uri>, taskViewModel: TaskViewModel, context: Context, callback: (Boolean) -> Unit) {
+suspend fun handleFileSelections(
+    taskId: Int,
+    uris: List<Uri>,
+    taskViewModel: TaskViewModel,
+    context: Context,
+    callback: (Boolean) -> Unit
+) {
     try {
         Log.d("FileSelection", "Handling files for taskId $taskId")
         if (taskId != -1) {
             uris.forEach { uri ->
                 val fileName = withContext(Dispatchers.IO) { getFileName(uri, context) }
                 val fileType = context.contentResolver.getType(uri)
-
                 val attachment = Attachment(
                     taskId = taskId,
                     filePath = fileName,
-                    fileType = fileType ?: "unknown"
+                    fileType = fileType ?: "unknown",
+                    uri = uri,
+                    contentProviderAuthority = uri.authority.toString()
                 )
 
                 withContext(Dispatchers.IO) {
@@ -141,8 +145,7 @@ suspend fun handleFileSelections(taskId: Int,uris: List<Uri>, taskViewModel: Tas
             withContext(Dispatchers.Main) {
                 callback(true)
             }
-        }
-        else {
+        } else {
             Log.e("FileSelection", "Failed to retrieve task ID for attachment")
             withContext(Dispatchers.Main) {
                 callback(false)
@@ -161,7 +164,7 @@ suspend fun handleFileSelections(taskId: Int,uris: List<Uri>, taskViewModel: Tas
 fun getFileName(uri: Uri, context: Context): String {
     var result: String? = null
     if (uri.scheme == "content") {
-        val cursor: Cursor? = context?.contentResolver?.query(uri, null, null, null, null)
+        val cursor: Cursor? = context.contentResolver?.query(uri, null, null, null, null)
         cursor?.use {
             if (it.moveToFirst()) {
                 result = it.getString(it.getColumnIndex(OpenableColumns.DISPLAY_NAME))
@@ -180,21 +183,16 @@ suspend fun addNewCategory(name: String, taskViewModel: TaskViewModel, callback:
         callback(existingCategory.id)
     } else {
 
-            val categoryId = taskViewModel.insertCategoryAndGetId(name)
-            if (categoryId != -1) {
-                Log.d("UI", "New category inserted with ID: $categoryId")
-                callback(categoryId)
-            } else {
-                Log.e("UI", "Failed to insert new category")
-                callback(-1)
-            }
+        val categoryId = taskViewModel.insertCategoryAndGetId(name)
+        if (categoryId != -1) {
+            Log.d("UI", "New category inserted with ID: $categoryId")
+            callback(categoryId)
+        } else {
+            Log.e("UI", "Failed to insert new category")
+            callback(-1)
+        }
 
     }
-}
-
-
-suspend fun getCategoryId(name: String, taskViewModel: TaskViewModel): Int {
-    return taskViewModel.getCategoryId(name)
 }
 
 
@@ -219,27 +217,23 @@ fun formatDateTime(taskDate: Date): Pair<String, String> {
 }
 
 fun showDeleteConfirmationDialog(task: Task, context: Context, taskViewModel: TaskViewModel) {
-    AlertDialog.Builder(context)
-        .setTitle("Delete Task")
+    AlertDialog.Builder(context).setTitle("Delete Task")
         .setMessage("Do you really want to delete ${task.title}?")
         .setPositiveButton("Yes") { _, _ ->
             taskViewModel.delete(task)
             Toast.makeText(context, "Task deleted", Toast.LENGTH_SHORT).show()
-        }
-        .setNegativeButton("No", null)
-        .show()
+        }.setNegativeButton("No", null).show()
 }
 
-fun showDeleteCategoryConfirmationDialog(category: Category, context: Context, taskViewModel: TaskViewModel) {
-    AlertDialog.Builder(context)
-        .setTitle("Delete Category")
+fun showDeleteCategoryConfirmationDialog(
+    category: Category, context: Context, taskViewModel: TaskViewModel
+) {
+    AlertDialog.Builder(context).setTitle("Delete Category")
         .setMessage("Do you really want to delete this category?")
         .setPositiveButton("Yes") { _, _ ->
             taskViewModel.deleteCategory(category)
             Toast.makeText(context, "Category deleted", Toast.LENGTH_SHORT).show()
-        }
-        .setNegativeButton("No", null)
-        .show()
+        }.setNegativeButton("No", null).show()
 }
 
 object IconHelper {
@@ -260,19 +254,19 @@ object IconHelper {
             imageView.setImageResource(iconRes)
         } else {
             val onlineIconUrl = "https://example.com/icons/$categoryName.png"
-            Glide.with(context)
-                .load(onlineIconUrl)
-                .apply(RequestOptions().error(R.drawable.ic_others))
-                .into(imageView)
+            Glide.with(context).load(onlineIconUrl)
+                .apply(RequestOptions().error(R.drawable.ic_others)).into(imageView)
         }
     }
 
 
 }
+
 @SuppressLint("ScheduleExactAlarm")
 fun scheduleNotification(task: Task, context: Context) {
     val sharedPreferences = context.getSharedPreferences("TaskSettings", Context.MODE_PRIVATE)
-    val notificationTimeBefore = sharedPreferences.getInt("notification_time", 10)  // default to 10 minutes
+    val notificationTimeBefore =
+        sharedPreferences.getInt("notification_time", 10)  // default to 10 minutes
 
     val notificationTime = task.completionTime.time - (notificationTimeBefore * 60 * 1000)
 
@@ -282,8 +276,100 @@ fun scheduleNotification(task: Task, context: Context) {
         putExtra("taskId", task.id)
         putExtra("taskTitle", task.title)
     }
-    val pendingIntent = PendingIntent.getBroadcast(context, task.id, intent, PendingIntent.FLAG_UPDATE_CURRENT)
+    val pendingIntent =
+        PendingIntent.getBroadcast(context, task.id, intent, PendingIntent.FLAG_UPDATE_CURRENT)
     alarmManager.setExact(AlarmManager.RTC_WAKEUP, notificationTime, pendingIntent)
+}
+
+fun getUriFromDatabase(attachment: Attachment): Uri {
+    return attachment.uri
+
+}
+
+@SuppressLint("QueryPermissionsNeeded")
+fun openFileFromUri(activity: Activity, attachment: Attachment) {
+    try {
+        val file = fileFromContentUri(activity, attachment)
+
+        if (!file.exists()) {
+            Toast.makeText(activity, "File does not exist", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val mimeType = activity.contentResolver.getType(attachment.uri) ?: "*/*"
+
+        // Example: Directly show image using Glide
+        if (mimeType.startsWith("image/")) {
+            val imageView = ImageView(activity)
+            Glide.with(activity)
+                .load(attachment.uri)
+                .into(imageView)
+
+            // Example: Show in a dialog
+            AlertDialog.Builder(activity)
+                .setView(imageView)
+                .setPositiveButton("Close") { dialog, _ ->
+                    dialog.dismiss()
+                }
+                .show()
+        } else {
+            // Handle other mime types accordingly (e.g., show PDF in WebView)
+            Toast.makeText(activity, "Unsupported file type", Toast.LENGTH_SHORT).show()
+        }
+
+    } catch (e: SecurityException) {
+        // Permission denied, request the permission
+        ActivityCompat.requestPermissions(
+            activity,
+            arrayOf(android.Manifest.permission.READ_EXTERNAL_STORAGE),
+            MainActivity.READ_EXTERNAL_STORAGE_PERMISSION_CODE
+        )
+    } catch (e: Exception) {
+        e.printStackTrace()
+        Toast.makeText(activity, "An error occurred while opening the file", Toast.LENGTH_SHORT)
+            .show()
+    }
+}
+fun fileFromContentUri(activity: Activity, attachment: Attachment): File {
+    val fileExtension = getFileExtension(activity, attachment.filePath)
+    val fileName = "temporary_file.$fileExtension"
+
+    val tempFile = File(activity.cacheDir, fileName)
+    tempFile.createNewFile()
+
+    try {
+        val oStream = FileOutputStream(tempFile)
+        val inputStream = activity.contentResolver.openInputStream(attachment.uri)
+
+        inputStream?.let {
+            copy(inputStream, oStream)
+        }
+
+        oStream.flush()
+
+    }
+    catch (e: SecurityException){
+        e.printStackTrace()
+    }
+    catch (e: Exception) {
+
+        e.printStackTrace()
+    }
+
+    return tempFile
+}
+
+fun getFileExtension(context: Context, path: String): String {
+    return path.substringAfter('.')
+}
+
+@Throws(IOException::class)
+fun copy(source: InputStream, target: OutputStream) {
+    val buf = ByteArray(8192)
+    var length: Int
+    while (source.read(buf).also { length = it } > 0) {
+        target.write(buf, 0, length)
+    }
 }
 
 

@@ -84,8 +84,17 @@ fun observePendingTasksForCurrentDay(
 
 }
 
+fun searchTasks(
+    lifecycleOwner: LifecycleOwner,
+    taskViewModel: TaskViewModel,
+    taskAdapter: TaskAdapter,
+    query: String
+) {
+    taskViewModel.searchTasks(query).observe(lifecycleOwner, Observer { tasks ->
+        taskAdapter.submitList(tasks)
+    })
 
-
+}
 fun observeCompletedTasksForCurrentDay(
     lifecycleOwner: LifecycleOwner,
     taskViewModel: TaskViewModel,

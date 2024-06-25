@@ -26,6 +26,7 @@ import com.example.todolist.helpers.observePendingTasksForCurrentDay
 import com.example.todolist.helpers.observeTasksForCurrentDay
 import com.example.todolist.helpers.observeUrgentTasks
 import com.example.todolist.helpers.observeUrgentTasksForCurrentDay
+import com.example.todolist.helpers.searchTasks
 import com.example.todolist.helpers.showCategoryDialog
 import com.example.todolist.helpers.showDeleteCategoryConfirmationDialog
 import com.example.todolist.helpers.showDeleteConfirmationDialog
@@ -45,6 +46,7 @@ class DailyTasksFragment : Fragment(R.layout.fragment_task_item_timeline) {
 
         val recyclerView: RecyclerView = rootView.findViewById(R.id.recycler_view)
         recyclerView.layoutManager = LinearLayoutManager(context)
+        HomeFragment.isDaily = true
         taskAdapter = TaskAdapter(isDaily = true, onTaskClick = { taskId ->
             Log.d("Navigation", "Task ID: $taskId")
             val action = HomeFragmentDirections.actionHomeFragmentToEditTaskFragment(taskId.toString())
@@ -62,6 +64,13 @@ class DailyTasksFragment : Fragment(R.layout.fragment_task_item_timeline) {
         })
         observeTasksForCurrentDay(viewLifecycleOwner, taskViewModel, taskAdapter)
         val filterButton: ImageView = rootView.findViewById(R.id.ic_filter)
+
+        arguments?.getString("search_query")?.let { query ->
+            if (query.isNotEmpty()) {
+                searchTasks(viewLifecycleOwner, taskViewModel, taskAdapter, query)
+            }
+        }
+
         filterButton.setOnClickListener {
             showFilterOptions(currentFilter)
         }
