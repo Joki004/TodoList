@@ -61,10 +61,13 @@ abstract class TaskDatabase : RoomDatabase() {
         // Helper function to get or create an instance of the database
         fun getInstance(context: Context): TaskDatabase {
             return instance ?: synchronized(this) {
-                instance ?: Room.databaseBuilder(context.applicationContext, TaskDatabase::class.java, "task_database")
+                instance ?: Room.databaseBuilder(
+                    context.applicationContext,
+                    TaskDatabase::class.java, "task_database"
+                )
                     .fallbackToDestructiveMigration()
                     .build()
-
+                    .also { instance = it }
             }
         }
     }

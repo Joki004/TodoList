@@ -385,7 +385,7 @@ class EditTaskFragment : Fragment(R.layout.fragment_edit_task) {
                     isCompleted = isCompleted.isChecked,
                     notificationEnabled = hasNotification.isChecked,
                     categoryId = categoryId,
-                    hasAttachments = mainTask.hasAttachments
+                    hasAttachments = attachmentList.isNotEmpty()
                 )
                 taskId = mainTask.id
 

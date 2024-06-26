@@ -68,7 +68,7 @@ class AllTasksFragment : Fragment(R.layout.fragment_task_item) {
         categoryAdapter = CategoryAdapter(isDaily = false, onCategoryLongClick = { category ->
             showDeleteCategoryConfirmationDialog(category, requireContext(), taskViewModel)
         })
-        taskViewModel = ViewModelProvider(this).get(TaskViewModel::class.java)
+        taskViewModel = ViewModelProvider(this)[TaskViewModel::class.java]
 
         observeAllTasks(viewLifecycleOwner, taskViewModel, taskAdapter)
         observeCategories(viewLifecycleOwner,taskViewModel, categoryAdapter)
@@ -88,7 +88,6 @@ class AllTasksFragment : Fragment(R.layout.fragment_task_item) {
         categoriesButtons.setOnClickListener {
             showCategoryDialog(requireContext(),viewLifecycleOwner,taskViewModel,taskAdapter,categoriesButtons)
         }
-
 
         return rootView
     }

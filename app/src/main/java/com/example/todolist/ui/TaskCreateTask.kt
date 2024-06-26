@@ -335,7 +335,7 @@ class TaskCreateTask : DialogFragment() {
                 categoryId = categoryId,
                 hasAttachments = hasAttachment
             )
-            lifecycleScope.launch {
+            GlobalScope.launch {
                 taskViewModel.insert(task)
             }
 

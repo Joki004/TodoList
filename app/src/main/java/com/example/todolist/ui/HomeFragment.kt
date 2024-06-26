@@ -56,7 +56,6 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
     ): View? {
         val rootView = inflater.inflate(R.layout.fragment_home, container, false)
 
-        // Initialize FloatingActionButton
         val fab: FloatingActionButton = rootView.findViewById(R.id.fab)
         fab.setOnClickListener {
             TaskCreateTask.newInstance().show(parentFragmentManager, "create_task")
@@ -99,13 +98,11 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                 ) {
                     Log.d("AllTasksFragment", "Search action triggered")
 
-                    // Close the keyboard
                     val imm =
                         context?.getSystemService(Context.INPUT_METHOD_SERVICE) as? InputMethodManager
                     imm?.hideSoftInputFromWindow(v.windowToken, 0)
                     Log.d("AllTasksFragment", "Keyboard hidden")
 
-                    // Perform your search or other action here
                     val query = searchBar.text.toString()
                     Log.d("AllTasksFragment", "Search query: $query")
                     val allTasksFragment = AllTasksFragment()
@@ -120,8 +117,6 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                         allTasksFragment.arguments = bundle
                         replaceFragment(allTasksFragment)
                     }
-
-
                     true
                 } else {
                     false
@@ -165,7 +160,6 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
 
     override fun onDestroyView() {
         super.onDestroyView()
-        // Stop the time updates when the view is destroyed
         handler.removeCallbacks(updateTimeRunnable)
     }
 

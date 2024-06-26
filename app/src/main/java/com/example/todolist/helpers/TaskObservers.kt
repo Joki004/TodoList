@@ -10,15 +10,18 @@ import com.example.todolist.database.entities.Task
 import com.example.todolist.viewmodel.TaskViewModel
 
 
+
 fun observeAllTasks(
     lifecycleOwner: LifecycleOwner,
     taskViewModel: TaskViewModel,
     taskAdapter: TaskAdapter
 ) {
     taskViewModel.tasksByCompletionTimeDESC.observe(lifecycleOwner, Observer { tasks ->
+
         taskAdapter.submitList(tasks)
     })
 }
+
 
 fun observePendingTasks(
     lifecycleOwner: LifecycleOwner,
