@@ -101,4 +101,8 @@ class TaskRepository(application: Application) {
         return taskDao.searchTasks(searchTerm)
     }
 
+    suspend fun updateHasAttachment(hasAttachment: Boolean, taskId: Int){
+        return taskDao.updateHasAttachment(hasAttachment,taskId)
+    }
+
 }

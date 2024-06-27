@@ -11,6 +11,7 @@ import com.example.todolist.database.entities.Attachment
 import com.example.todolist.database.entities.Category
 import com.example.todolist.database.entities.Task
 import com.example.todolist.repository.TaskRepository
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -191,5 +192,11 @@ class TaskViewModel(application: Application) : AndroidViewModel(application) {
 
     fun searchTasks(searchTerm: String): LiveData<List<Task>> {
         return repository.searchTasks(searchTerm)
+    }
+
+    fun updateHasAttachment(hasAttachment: Boolean, taskId: Int) {
+        viewModelScope.launch(Dispatchers.IO) {
+            repository.updateHasAttachment(hasAttachment, taskId)
+        }
     }
 }

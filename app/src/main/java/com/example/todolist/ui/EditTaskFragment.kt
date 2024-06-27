@@ -23,7 +23,6 @@ import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
@@ -63,6 +62,7 @@ class EditTaskFragment : Fragment(R.layout.fragment_edit_task) {
     private lateinit var time: EditText
     private lateinit var categorySpinner: Spinner
     private lateinit var saveButton: Button
+    private var TaskId: Int? = null
 
     @SuppressLint("UseSwitchCompatOrMaterialCode")
     private lateinit var hasNotification: Switch
@@ -92,14 +92,18 @@ class EditTaskFragment : Fragment(R.layout.fragment_edit_task) {
                     uris.forEach { uri ->
                         val fileName = getFileName(uri, requireContext())
                         val fileType = context?.contentResolver?.getType(uri)
-                        val attachmentSelected = Attachment(
-                            taskId = 0,
-                            filePath = fileName,
-                            fileType = fileType ?: "unknown",
-                            uri = uri,
-                            contentProviderAuthority = uri.authority.toString()
-                        )
-                        attachments.add(attachmentSelected)
+                        val attachmentSelected = TaskId?.let { taskIdNewAttachment ->
+                            Attachment(
+                                taskId = taskIdNewAttachment,
+                                filePath = fileName,
+                                fileType = fileType ?: "unknown",
+                                uri = uri,
+                                contentProviderAuthority = uri.authority.toString()
+                            )
+                        }
+                        if (attachmentSelected != null) {
+                            attachments.add(attachmentSelected)
+                        }
                         takePersistableUriPermission(uri, requireContext())
                     }
                     updateAttachmentList()
@@ -121,22 +125,16 @@ class EditTaskFragment : Fragment(R.layout.fragment_edit_task) {
         Log.d("EditTaskFragment", "onViewCreated")
         taskViewModel = ViewModelProvider(this)[TaskViewModel::class.java]
 
-        // Initialize all views
         initializeViews(view)
-
-        // Set up the category spinner
         populateCategorySpinner()
-
-        // Set up listeners
         setListeners()
 
-        // Handle arguments
         arguments?.getString("taskId")?.toIntOrNull()?.let { taskId ->
             observeTaskById(requireContext(), viewLifecycleOwner, taskViewModel, taskId) { task ->
 
-
+                TaskId = taskId
                 displayTask(task)
-                // Observe attachments for the given task ID
+
                 taskViewModel.getAttachmentsByTaskId(taskId)
                     .observe(viewLifecycleOwner) { attachments ->
                         attachmentList.clear()
@@ -266,13 +264,12 @@ class EditTaskFragment : Fragment(R.layout.fragment_edit_task) {
 
             attachments.remove(attachment)
             viewLifecycleOwner.lifecycleScope.launch {
-                taskViewModel.deleteAttachmentByFilePath(attachment.filePath, attachment.taskId)
+                taskViewModel.deleteAttachment(attachment)
             }
-
+            TaskId?.let { taskViewModel.updateHasAttachment(attachmentList.isNotEmpty(), it) }
         }
     }
 
-    @OptIn(DelicateCoroutinesApi::class)
     private fun handleSaveButtonClick() {
         val selectedPosition = categorySpinner.selectedItemPosition
         if (selectedPosition != Spinner.INVALID_POSITION) {
@@ -432,7 +429,11 @@ class EditTaskFragment : Fragment(R.layout.fragment_edit_task) {
 
     @SuppressLint("NotifyDataSetChanged")
     private fun updateAttachmentList() {
-        attachmentList.addAll(attachments)
+        val allAttachments = mutableListOf<Attachment>()
+        allAttachments.addAll(attachmentList)
+        allAttachments.addAll(attachments)
+        attachmentList.clear()
+        attachmentList.addAll(allAttachments)
         attachmentAdapter.notifyDataSetChanged()
     }
 }
