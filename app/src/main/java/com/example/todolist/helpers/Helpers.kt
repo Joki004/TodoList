@@ -17,6 +17,7 @@ import android.widget.EditText
 import android.widget.ImageView
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
+import androidx.core.content.FileProvider
 import androidx.lifecycle.LifecycleOwner
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.RequestOptions
@@ -129,16 +130,22 @@ suspend fun handleFileSelections(
             uris.forEach { uri ->
                 val fileName = withContext(Dispatchers.IO) { getFileName(uri, context) }
                 val fileType = context.contentResolver.getType(uri)
-                val attachment = Attachment(
-                    taskId = taskId,
-                    filePath = fileName,
-                    fileType = fileType ?: "unknown",
-                    uri = uri,
-                    contentProviderAuthority = uri.authority.toString()
-                )
 
-                withContext(Dispatchers.IO) {
-                    taskViewModel.addAttachment(attachment)
+                // Copy the file from external to internal storage
+                val copiedFileUri = withContext(Dispatchers.IO) { copyFileToInternalStorage(uri, fileName, taskId, context) }
+
+                if (copiedFileUri != null) {
+                    val attachment = Attachment(
+                        taskId = taskId,
+                        filePath = fileName,
+                        fileType = fileType ?: "unknown",
+                        uri = copiedFileUri,
+                        contentProviderAuthority = copiedFileUri.authority.toString()
+                    )
+
+                    withContext(Dispatchers.IO) {
+                        taskViewModel.addAttachment(attachment)
+                    }
                 }
             }
 
@@ -159,6 +166,33 @@ suspend fun handleFileSelections(
     }
 }
 
+private fun copyFileToInternalStorage(uri: Uri, fileName: String, taskId: Int, context: Context): Uri? {
+    return try {
+        val inputStream: InputStream? = context.contentResolver.openInputStream(uri)
+        val taskDir = File(context.filesDir, taskId.toString())
+        if (!taskDir.exists()) {
+            taskDir.mkdirs()
+        }
+        val outputFile = File(taskDir, fileName)
+        val outputStream: OutputStream = FileOutputStream(outputFile)
+
+        inputStream?.use { input ->
+            outputStream.use { output ->
+                val buffer = ByteArray(1024)
+                var length: Int
+                while (input.read(buffer).also { length = it } > 0) {
+                    output.write(buffer, 0, length)
+                }
+                output.flush()
+            }
+        }
+        FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", outputFile)
+    } catch (e: Exception) {
+        Log.e("FileCopy", "Error copying file: ${e.message}")
+        null
+    }
+}
+
 
 @SuppressLint("Range")
 fun getFileName(uri: Uri, context: Context): String {
@@ -174,6 +208,26 @@ fun getFileName(uri: Uri, context: Context): String {
     return result ?: uri.lastPathSegment ?: "unknown"
 }
 
+fun deleteFileFromInternalStorage(filePath: String, taskId: Int, context: Context): Boolean {
+    return try {
+        val taskDir = File(context.filesDir, taskId.toString())
+        val file = File(taskDir, filePath)
+        var fileDeleted = false
+
+        if (file.exists()) {
+            fileDeleted = file.delete()
+        }
+
+        if (taskDir.isDirectory && taskDir.list().isNullOrEmpty()) {
+            taskDir.delete()
+        }
+
+        fileDeleted
+    } catch (e: Exception) {
+        Log.e("FileDelete", "Error deleting file: ${e.message}")
+        false
+    }
+}
 suspend fun addNewCategory(name: String, taskViewModel: TaskViewModel, callback: (Int) -> Unit) {
     val categories = Categories.categoryList ?: mutableListOf()
 
@@ -266,7 +320,7 @@ object IconHelper {
 fun scheduleNotification(task: Task, context: Context) {
     val sharedPreferences = context.getSharedPreferences("TaskSettings", Context.MODE_PRIVATE)
     val notificationTimeBefore =
-        sharedPreferences.getInt("notification_time", 10)  // default to 10 minutes
+        sharedPreferences.getInt("notification_time", 10)
 
     val notificationTime = task.completionTime.time - (notificationTimeBefore * 60 * 1000)
 
@@ -281,55 +335,16 @@ fun scheduleNotification(task: Task, context: Context) {
     alarmManager.setExact(AlarmManager.RTC_WAKEUP, notificationTime, pendingIntent)
 }
 
-fun getUriFromDatabase(attachment: Attachment): Uri {
-    return attachment.uri
-
-}
-
-@SuppressLint("QueryPermissionsNeeded")
-fun openFileFromUri(activity: Activity, attachment: Attachment) {
-    try {
-        val file = fileFromContentUri(activity, attachment)
-
-        if (!file.exists()) {
-            Toast.makeText(activity, "File does not exist", Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        val mimeType = activity.contentResolver.getType(attachment.uri) ?: "*/*"
-
-        // Example: Directly show image using Glide
-        if (mimeType.startsWith("image/")) {
-            val imageView = ImageView(activity)
-            Glide.with(activity)
-                .load(attachment.uri)
-                .into(imageView)
-
-            // Example: Show in a dialog
-            AlertDialog.Builder(activity)
-                .setView(imageView)
-                .setPositiveButton("Close") { dialog, _ ->
-                    dialog.dismiss()
-                }
-                .show()
-        } else {
-            // Handle other mime types accordingly (e.g., show PDF in WebView)
-            Toast.makeText(activity, "Unsupported file type", Toast.LENGTH_SHORT).show()
-        }
-
-    } catch (e: SecurityException) {
-        // Permission denied, request the permission
-        ActivityCompat.requestPermissions(
-            activity,
-            arrayOf(android.Manifest.permission.READ_EXTERNAL_STORAGE),
-            MainActivity.READ_EXTERNAL_STORAGE_PERMISSION_CODE
-        )
-    } catch (e: Exception) {
-        e.printStackTrace()
-        Toast.makeText(activity, "An error occurred while opening the file", Toast.LENGTH_SHORT)
-            .show()
+ fun cancelNotification(task: Task, context: Context) {
+    val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+    val intent = Intent(context, NotificationReceiver::class.java).apply {
+        putExtra("taskId", task.id)
+        putExtra("taskTitle", task.title)
     }
+    val pendingIntent = PendingIntent.getBroadcast(context, task.id, intent, PendingIntent.FLAG_UPDATE_CURRENT)
+    alarmManager.cancel(pendingIntent)
 }
+
 fun fileFromContentUri(activity: Activity, attachment: Attachment): File {
     val fileExtension = getFileExtension(activity, attachment.filePath)
     val fileName = "temporary_file.$fileExtension"

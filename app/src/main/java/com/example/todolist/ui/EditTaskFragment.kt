@@ -34,6 +34,8 @@ import com.example.todolist.database.entities.Attachment
 import com.example.todolist.database.entities.Task
 import com.example.todolist.helpers.Categories
 import com.example.todolist.helpers.addNewCategory
+import com.example.todolist.helpers.cancelNotification
+import com.example.todolist.helpers.deleteFileFromInternalStorage
 import com.example.todolist.helpers.formatDateTime
 import com.example.todolist.helpers.getDateTimeMillis
 import com.example.todolist.helpers.getFileName
@@ -263,9 +265,18 @@ class EditTaskFragment : Fragment(R.layout.fragment_edit_task) {
             uriToRemove?.let { selectedUris.remove(it) }
 
             attachments.remove(attachment)
-            viewLifecycleOwner.lifecycleScope.launch {
-                taskViewModel.deleteAttachment(attachment)
+
+
+            val fileDeleted = deleteFileFromInternalStorage(attachment.filePath, attachment.taskId, requireContext())
+
+            if (fileDeleted) {
+                viewLifecycleOwner.lifecycleScope.launch {
+                    taskViewModel.deleteAttachment(attachment)
+                }
+            } else {
+                showToast("Failed to delete file from internal storage")
             }
+
             TaskId?.let { taskViewModel.updateHasAttachment(attachmentList.isNotEmpty(), it) }
         }
     }
@@ -389,7 +400,13 @@ class EditTaskFragment : Fragment(R.layout.fragment_edit_task) {
                 taskViewModel.update(task)
                 if (task.notificationEnabled) {
                     scheduleNotification(task, requireContext())
+                } else if (task.isCompleted) {
+                    cancelNotification(task, requireContext())
+                } else {
+                    cancelNotification(task, requireContext())
                 }
+
+
 
                 viewLifecycleOwner.lifecycleScope.launch {
                     try {

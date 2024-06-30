@@ -50,15 +50,14 @@ abstract class TaskDatabase : RoomDatabase() {
             FROM attachment_table
         """)
 
-                // Drop the old table
                 db.execSQL("DROP TABLE attachment_table")
 
-                // Rename the new table to the old table name
+
                 db.execSQL("ALTER TABLE attachment_table_new RENAME TO attachment_table")
             }
         }
 
-        // Helper function to get or create an instance of the database
+
         fun getInstance(context: Context): TaskDatabase {
             return instance ?: synchronized(this) {
                 instance ?: Room.databaseBuilder(
